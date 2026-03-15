@@ -44,16 +44,22 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   Future<void> _loadTodayEntry() async {
     setState(() => _isLoading = true);
-    final history = await ApiService.getChallengeHistory(widget.challenge['id']);
-    final day = widget.challenge['current_day'];
-    final entry = history.firstWhere(
-      (e) => e['day_number'] == day,
-      orElse: () => null,
-    );
-    setState(() {
-      _todayEntry = entry;
-      _isLoading = false;
-    });
+    try {
+      final history = await ApiService.getChallengeHistory(widget.challenge['id']);
+      final day = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
+      final entry = history.firstWhere(
+        (e) => int.tryParse(e['day_number']?.toString() ?? '0') == day,
+        orElse: () => null,
+      );
+      if (mounted) {
+        setState(() {
+          _todayEntry = entry;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   // --- GACHA ANIMATION ---
@@ -201,8 +207,8 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   @override
   Widget build(BuildContext context) {
     final challenge = widget.challenge;
-    final currentDay = challenge['current_day'] as int;
-    final totalDays = challenge['total_days'] as int;
+    final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
+    final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
     final seriesName = challenge['series']?['name'] ?? 'TLQ';
     final hasBefore = _todayEntry?['before_pesan'] != null;
     final hasAfter = _todayEntry?['after_berhasil'] != null;

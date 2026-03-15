@@ -54,7 +54,14 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _myJars = data['jars'];
-          _myChallenges = data['active_challenges'];
+          // Filter challenges: only show if they have a corresponding JAR license
+          final rawChallenges = data['active_challenges'] as List;
+          final ownedSeriesIds = _myJars.map((j) => j['series_id'].toString()).toSet();
+          
+          _myChallenges = rawChallenges
+              .where((c) => ownedSeriesIds.contains(c['series_id'].toString()))
+              .toList();
+          
           _isLoading = false;
         });
       }
@@ -256,20 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             if (_myJars.isEmpty) ...[
                               const SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    // We can just hide the alert by giving a dummy value
-                                    _myJars = [
-                                      {'id': 'temp', 'dummy': true}
-                                    ];
-                                  });
-                                },
-                                child: Text('Oke, Mengerti',
-                                    style: GoogleFonts.inter(
-                                        color: AppColors.emeraldIslamic,
-                                        fontWeight: FontWeight.bold)),
-                              ),
                             ],
                           ],
                         ),
@@ -523,13 +516,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showActivateChallengeDialog() {
-    if (_myJars.isEmpty || (_myJars.length == 1 && _myJars[0]['id'] == 'temp')) {
+    if (_myJars.isEmpty) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text('Akses Terkunci', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-          content: Text('Anda belum mengaktifkan Jar apapun.\n\nSilahkan hubungi Distributor TLQ anda (08995295781) untuk mendapatkan kode aktivasi.',
+          content: Text('Anda belum mengaktifkan Jar apapun.\n\nSilahkan hubungi Distributor TLQ anda (08995295781) untuk mendapatkan kode aktivasi atau ketuk "Aktivasi Jar" untuk memindai QR.',
             style: GoogleFonts.inter()),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
@@ -538,6 +531,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return;
     }
+
+    // Only allow selecting series that the user owns a license for
+    final ownedSeriesIds = _myJars.map((j) => j['series_id'].toString()).toSet();
+    final availableSeries = _allSeries.where((s) => ownedSeriesIds.contains(s['id'].toString())).toList();
 
     showDialog(
       context: context,
@@ -549,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.maxFinite,
           child: ListView(
             shrinkWrap: true,
-            children: _allSeries.map((s) => ListTile(
+            children: availableSeries.map((s) => ListTile(
               leading: CircleAvatar(
                 backgroundColor: (s['color'] as Color).withAlpha(40),
                 backgroundImage: AssetImage(s['image'] as String),
