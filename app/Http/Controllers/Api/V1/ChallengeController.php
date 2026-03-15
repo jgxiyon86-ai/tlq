@@ -36,7 +36,7 @@ class ChallengeController extends Controller
         // If 'confirmed' flag is not true and user has no license, ask for confirmation
         if (!$hasLicense && !$request->boolean('confirmed')) {
             return response()->json([
-                'message' => 'Anda belum mempunyai Jar ' . Series::find($request->series_id)->name . '.\nYakin ingin tetap menantang diri sendiri selama ' . $totalDays . ' hari dengan materi ini?',
+                'message' => 'Anda belum mempunyai Jar ' . Series::find($request->series_id)->name . ".\n\nYakin ingin tetap menantang diri sendiri selama " . $totalDays . " hari dengan materi ini?\n\nJika ingin aktivasi, silahkan hubungi Distributor TLQ anda (08995295781) untuk mendapatkan kode aktivasi.",
                 'needs_confirmation' => true,
             ], 200); 
         }
@@ -76,12 +76,20 @@ class ChallengeController extends Controller
      */
     public function index(Request $request)
     {
-        $challenges = Challenge::where('user_id', $request->user()->id)
+        $user = $request->user();
+        $challenges = Challenge::where('user_id', $user->id)
             ->with('series')
             ->get()
-            ->map(function ($c) {
+            ->map(function ($c) use ($user) {
                 $entry = $c->today_entry;
                 $c->today_entry = $entry;
+                
+                // Check if user has an activated license for this series
+                $c->has_license = License::where('activated_by', $user->id)
+                    ->where('series_id', $c->series_id)
+                    ->where('is_activated', true)
+                    ->exists();
+                    
                 return $c;
             });
 
@@ -96,6 +104,28 @@ class ChallengeController extends Controller
     {
         if ($challenge->user_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'device_id' => 'required|string',
+        ]);
+
+        // STRICT CHECK: User must have an ACTIVATED license for this series on THIS device
+        $license = License::where('activated_by', $request->user()->id)
+            ->where('series_id', $challenge->series_id)
+            ->where('is_activated', true)
+            ->first();
+
+        if (!$license) {
+            return response()->json([
+                'message' => 'Akses Terkunci. Anda harus mengaktivasi Jar seri ini terlebih dahulu untuk mendapatkan ayat harian.'
+            ], 403);
+        }
+
+        if ($license->device_id !== $request->device_id) {
+            return response()->json([
+                'message' => 'Akses Ditolak. Lisensi Jar ini terdaftar di perangkat lain. Silakan logout dari perangkat lama anda atau hubungi Distributor.'
+            ], 403);
         }
 
         // 1. Check if there's any INCOMPLETE entry first

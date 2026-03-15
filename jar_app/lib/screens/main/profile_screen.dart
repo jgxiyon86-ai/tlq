@@ -70,6 +70,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _showTransferDialog(String key) async {
+    final emailCtrl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Pindah Lisensi', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Masukkan email akun tujuan untuk memindahkan Jar ini secara langsung.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailCtrl,
+              decoration: InputDecoration(
+                labelText: 'Email Tujuan',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Pindahkan'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && emailCtrl.text.isNotEmpty) {
+      setState(() => _isLoading = true);
+      try {
+        final res = await ApiService.transferJar(key, emailCtrl.text.trim());
+        _showSnack(res['message'] ?? 'Berhasil dipindahkan!', AppColors.emeraldIslamic);
+        await _loadLicenses();
+      } catch (e) {
+        _showSnack(e.toString(), Colors.red);
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -381,10 +427,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Icon(Icons.inventory_2, color: Colors.white, size: 20),
                         ),
                         title: Text(l['series']?['name'] ?? 'TLQ Jar', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text(l['license_key'], style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
-                        trailing: TextButton(
-                          onPressed: () => _releaseLicense(l['license_key']),
-                          child: const Text('Lepas', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l['license_key'], style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                            const SizedBox(height: 2),
+                            Text('Terhubung Ke: ${l['user']?['email'] ?? 'Akun Saya'}', 
+                                style: GoogleFonts.inter(fontSize: 11, color: AppColors.emeraldIslamic, fontWeight: FontWeight.w500)),
+                            if (l['device_id'] != null)
+                              Text('ID Perangkat: ${l['device_id']}', 
+                                  style: GoogleFonts.inter(fontSize: 10, color: Colors.grey.shade500)),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: () => _showTransferDialog(l['license_key']),
+                              child: const Text('Pindah', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                            ),
+                            TextButton(
+                              onPressed: () => _releaseLicense(l['license_key']),
+                              child: const Text('Lepas', style: TextStyle(color: Colors.red, fontSize: 12)),
+                            ),
+                          ],
                         ),
                       )).toList(),
                     ),

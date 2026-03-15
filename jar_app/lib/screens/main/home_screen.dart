@@ -639,10 +639,52 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _activateJar(String key) async {
     setState(() => _isLoading = true);
     try {
-      await ApiService.activateJar(key);
+      final res = await ApiService.activateJar(key);
+      if (res['can_request_transfer'] == true) {
+        if (mounted) setState(() => _isLoading = false);
+        _showTransferRequestDialog(key, res['message'] ?? '');
+        return;
+      }
       await _loadAll();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Berhasil aktivasi!')));
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      }
     }
+  }
+
+  void _showTransferRequestDialog(String key, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Pindahkan Lisensi?', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: Text('$message\n\nApakah Anda ingin mengirim permintaan transfer ke email pemilik sebelumnya untuk mengambil alih Jar ini?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _isLoading = true);
+              try {
+                final res = await ApiService.requestLicenseTransfer(key);
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Permintaan dikirim!')));
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                }
+              }
+            },
+            child: const Text('Ya, Kirim Permintaan'),
+          ),
+        ],
+      ),
+    );
   }
 }

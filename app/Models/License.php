@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class License extends Model
 {
-    protected $fillable = ['license_key', 'series_id', 'is_activated', 'activated_by', 'activated_at', 'print_count'];
+    protected $fillable = ['license_key', 'series_id', 'is_activated', 'activated_by', 'activated_at', 'print_count', 'device_id'];
 
     public function series()
     {

@@ -17,6 +17,9 @@ Route::group(['prefix' => 'v1'], function () {
     Route::post('/login/facebook', [AuthController::class, 'facebookLogin']);
     Route::post('/login/phone', [AuthController::class, 'phoneLogin']);
     Route::get('/manual/{series_id}', [ManualController::class, 'getBySeries']);
+    
+    // Public Transfer Link (from Email)
+    Route::get('/licenses/transfer/{token}/{action}', [LicenseController::class, 'handleTransferAction'])->name('license.transfer.action');
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -28,6 +31,8 @@ Route::group(['prefix' => 'v1'], function () {
         Route::get('/licenses', [LicenseController::class, 'index']);
         Route::post('/licenses/activate', [LicenseController::class, 'activate']);
         Route::post('/licenses/release', [LicenseController::class, 'release']);
+        Route::post('/licenses/transfer-request', [LicenseController::class, 'requestTransfer']);
+        Route::post('/licenses/transfer', [LicenseController::class, 'transfer']);
 
         // Content
         Route::post('/licenses/shake', [ContentController::class, 'shake']);

@@ -5,6 +5,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String baseUrl = 'https://tlq.pondokalima.com/api/v1';
 
+  static Future<String> getDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? id = prefs.getString('device_id');
+    if (id == null) {
+      id = 'dev_${DateTime.now().millisecondsSinceEpoch}_${(1000 + (9000 * (DateTime.now().microsecond / 1000000))).toInt()}';
+      await prefs.setString('device_id', id);
+    }
+    return id;
+  }
+
   // --- AUTH ---
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
@@ -194,7 +204,24 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> activateJar(String key) async {
-    return _authenticatedPost('$baseUrl/licenses/activate', {'license_key': key});
+    final devId = await getDeviceId();
+    return _authenticatedPost('$baseUrl/licenses/activate', {
+      'license_key': key,
+      'device_id': devId,
+    });
+  }
+
+  static Future<Map<String, dynamic>> requestLicenseTransfer(String key) async {
+    return _authenticatedPost('$baseUrl/licenses/transfer-request', {
+      'license_key': key,
+    });
+  }
+
+  static Future<Map<String, dynamic>> transferJar(String key, String email) async {
+    return _authenticatedPost('$baseUrl/licenses/transfer', {
+      'license_key': key,
+      'target_email': email,
+    });
   }
 
   static Future<List<dynamic>> getManualPages(String seriesId) async {
@@ -230,7 +257,11 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> shakeJar(String licenseKey) async {
-    return _authenticatedPost('$baseUrl/licenses/shake', {'license_key': licenseKey});
+    final devId = await getDeviceId();
+    return _authenticatedPost('$baseUrl/licenses/shake', {
+      'license_key': licenseKey,
+      'device_id': devId,
+    });
   }
 
   static Future<Map<String, dynamic>> activateChallenge(int seriesId, {bool confirmed = false, bool isSevenDays = false}) async {
@@ -242,7 +273,10 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> rollContent(int challengeId) async {
-    return _authenticatedPost('$baseUrl/challenges/$challengeId/roll', {});
+    final devId = await getDeviceId();
+    return _authenticatedPost('$baseUrl/challenges/$challengeId/roll', {
+      'device_id': devId,
+    });
   }
 
   static Future<Map<String, dynamic>> saveBefore(int entryId, String pesan, String perasaan, String action) async {
@@ -319,6 +353,10 @@ class ApiService {
       final data = json.decode(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return data;
+      }
+      
+      if (response.statusCode == 422) {
+        return data; // Return data so we can check for flags like can_request_transfer
       }
       
       throw Exception(data['message'] ?? 'Request failed');

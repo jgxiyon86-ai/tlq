@@ -287,6 +287,10 @@ class _ChallengeScreenState extends State<ChallengeScreen>
             padding: const EdgeInsets.all(20),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // ACTIVATION WARNING
+                if (widget.challenge['has_license'] == false)
+                  _buildActivationWarning(),
+
                 // GACHA SECTION
                 if (!hasEntry) ...[
                   FadeInUp(
@@ -498,6 +502,49 @@ class _ChallengeScreenState extends State<ChallengeScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActivationWarning() {
+    return FadeInDown(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange.shade800, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Belum Teraktivasi',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade900,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Silahkan hubungi Distributor TLQ anda (08995295781) untuk mendapatkan kode aktivasi.',
+                    style: GoogleFonts.inter(
+                      color: Colors.orange.shade800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
