@@ -63,6 +63,8 @@
                         <th class="py-4 font-medium">Series</th>
                         <th class="py-4 font-medium text-center">Telah Dicetak</th>
                         <th class="py-4 font-medium">Status</th>
+                        <th class="py-4 font-medium">Pemilik</th>
+                        <th class="py-4 font-medium">Device ID</th>
                         <th class="py-4 font-medium hidden md:table-cell">Dibuat</th>
                         <th class="py-4 font-medium">Aksi</th>
                     </tr>
@@ -93,6 +95,21 @@
                                 @else
                                     <span class="flex items-center text-gray-400"><span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> Belum Aktif</span>
                                 @endif
+                            </td>
+                            <td class="py-4">
+                                @if($license->user)
+                                    <div class="text-xs">
+                                        <div class="font-bold text-gray-800">{{ $license->user->name }}</div>
+                                        <div class="text-gray-400">{{ $license->user->email }}</div>
+                                    </div>
+                                @else
+                                    <span class="text-gray-300">-</span>
+                                @endif
+                            </td>
+                            <td class="py-4">
+                                <code class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">
+                                    {{ $license->device_id ?? '-' }}
+                                </code>
                             </td>
                             <td class="py-4 hidden md:table-cell text-gray-400 text-xs">{{ $license->created_at->format('d M Y') }}</td>
                             <td class="py-4">

@@ -24,29 +24,27 @@
             </div>
             
             <div class="space-y-4">
-                @if(count($activeChallengesList) > 0)
-                    @foreach($activeChallengesList as $c)
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-white border border-transparent hover:border-gray-100 transition">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style="background-color: {{ $c->series->color_hex ?? '#064E3B' }}">
-                                {{ strtoupper(substr($c->series->name, 0, 1)) }}
-                            </div>
-                            <div class="ml-4">
-                                <p class="font-bold text-gray-800 text-sm">{{ $c->user->name }}</p>
-                                <p class="text-[10px] text-gray-500">{{ $c->series->name }} ({{ $c->is_seven_days ? '7' : '40' }} Hari)</p>
-                            </div>
+                @forelse($activeChallengesList as $c)
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-white border border-transparent hover:border-gray-100 transition">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style="background-color: {{ $c->series->color_hex ?? '#064E3B' }}">
+                            {{ strtoupper(substr($c->series->name, 0, 1)) }}
                         </div>
-                        <div class="text-right">
-                            <p class="text-sm font-bold text-emerald-600">Hari ke-{{ $c->current_day }}</p>
-                            <p class="text-[10px] text-gray-400">{{ $c->created_at->diffForHumans() }}</p>
+                        <div class="ml-4">
+                            <p class="font-bold text-gray-800 text-sm">{{ $c->user->name }}</p>
+                            <p class="text-[10px] text-gray-500">{{ $c->series->name }} ({{ $c->is_seven_days ? '7' : '40' }} Hari)</p>
                         </div>
                     </div>
-                    @endforeach
-                @else
-                    <div class="py-20 text-center">
-                        <p class="text-gray-400 text-sm">Belum ada tantangan yang sedang berjalan.</p>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-emerald-600">Hari ke-{{ $c->current_day }}</p>
+                        <p class="text-[10px] text-gray-400">{{ $c->created_at->diffForHumans() }}</p>
                     </div>
-                @endif
+                </div>
+                @empty
+                <div class="py-20 text-center">
+                    <p class="text-gray-400 text-sm">Belum ada tantangan yang sedang berjalan.</p>
+                </div>
+                @endforelse
             </div>
             
             <div class="mt-6">
@@ -88,6 +86,60 @@
             <div class="mt-6">
                 {{ $recentJournalEntries->links() }}
             </div>
+        </div>
+    <div class="mt-8 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+            Monitoring Transfer Lisensi ({{ $transferRequests->total() }})
+        </h3>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-50 uppercase text-xs">
+                        <th class="py-4 font-medium">Jar/Series</th>
+                        <th class="py-4 font-medium">Dari (Pemilik)</th>
+                        <th class="py-4 font-medium">Ke (Peminta)</th>
+                        <th class="py-4 font-medium">Status</th>
+                        <th class="py-4 font-medium">Waktu</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @forelse($transferRequests as $t)
+                    <tr>
+                        <td class="py-4">
+                            <span class="font-bold text-gray-800">{{ $t->license->license_key }}</span><br>
+                            <span class="text-[10px] text-gray-400">{{ $t->license->series->name }}</span>
+                        </td>
+                        <td class="py-4 text-xs">
+                            <span class="font-semibold text-gray-700">{{ $t->owner->name }}</span><br>
+                            <span class="text-gray-400">{{ $t->owner->email }}</span>
+                        </td>
+                        <td class="py-4 text-xs">
+                            <span class="font-semibold text-gray-700">{{ $t->requester->name }}</span><br>
+                            <span class="text-gray-400">{{ $t->requester->email }}</span>
+                        </td>
+                        <td class="py-4">
+                            @if($t->status === 'approved')
+                                <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">SETUJU</span>
+                            @elseif($t->status === 'rejected')
+                                <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[10px] font-bold">DITOLAK</span>
+                            @else
+                                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">PENDING</span>
+                            @endif
+                        </td>
+                        <td class="py-4 text-gray-400 text-[10px]">{{ $t->created_at->format('d/m/y H:i') }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="py-10 text-center text-gray-400">Belum ada riwayat transfer lisensi.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4">
+            {{ $transferRequests->links() }}
         </div>
     </div>
 </div>

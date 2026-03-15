@@ -9,6 +9,7 @@ use App\Models\License;
 use App\Models\User;
 use App\Models\Challenge;
 use App\Models\JournalEntry;
+use App\Models\LicenseTransferRequest;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
@@ -72,13 +73,17 @@ class AdminController extends Controller
             ->latest()
             ->paginate(50);
 
-        return view('admin.monitoring', compact('activeChallengesList', 'recentJournalEntries'));
+        $transferRequests = LicenseTransferRequest::with(['license.series', 'requester', 'owner'])
+            ->latest()
+            ->paginate(50);
+
+        return view('admin.monitoring', compact('activeChallengesList', 'recentJournalEntries', 'transferRequests'));
     }
 
     public function licenses(Request $request)
     {
         $series = Series::all();
-        $query = License::with('series')->latest();
+        $query = License::with(['series', 'user'])->latest();
 
         if ($request->has('series_id') && $request->series_id != '') {
             $query->where('series_id', $request->series_id);
