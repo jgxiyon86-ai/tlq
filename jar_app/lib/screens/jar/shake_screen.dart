@@ -51,13 +51,12 @@ class _ShakeScreenState extends State<ShakeScreen> with SingleTickerProviderStat
     });
   }
 
-  void _onShakeDetected() async {
+  void _startManualShake() {
     setState(() => _isShaking = true);
     _shakeController.repeat(reverse: true);
-    
-    // Simulate shaking for 1.5 seconds then reveal
-    await Future.delayed(const Duration(milliseconds: 1500));
-    
+  }
+
+  void _stopManualShake() {
     if (mounted) {
       _shakeController.stop();
       setState(() {
@@ -66,6 +65,14 @@ class _ShakeScreenState extends State<ShakeScreen> with SingleTickerProviderStat
       });
       _fetchContent();
     }
+  }
+
+  void _onShakeDetected() async {
+    _startManualShake();
+    
+    // Simulate shaking for 1.5 seconds then reveal automatically
+    await Future.delayed(const Duration(milliseconds: 1500));
+    _stopManualShake();
   }
 
   Future<void> _fetchContent() async {
@@ -103,24 +110,37 @@ class _ShakeScreenState extends State<ShakeScreen> with SingleTickerProviderStat
             if (!_revealing) ...[
               const Text(
                 'Goyangkan Smartphone Anda',
-                style: TextStyle(fontSize: 18, color: AppColors.textLight),
+                style: TextStyle(fontSize: 18, color: AppColors.textLight, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Untuk mengambil pesan cinta hari ini',
+                'Atau tekan tombol di bawah untuk membuka',
                 style: TextStyle(fontSize: 14, color: AppColors.textLight, fontStyle: FontStyle.italic),
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 30),
               
               AnimatedBuilder(
                 animation: _shakeController,
                 builder: (context, child) {
                   return Transform.translate(
-                    offset: Offset(_shakeController.value * 10 - 5, 0),
+                    offset: Offset(_shakeController.value * 12 - 6, 0),
                     child: child,
                   );
                 },
-                child: Icon(Icons.door_front_door, size: 200, color: seriesColor), // Placeholder for actual Jar Illustration
+                child: Icon(Icons.auto_awesome_motion, size: 180, color: seriesColor),
+              ),
+              const SizedBox(height: 50),
+              
+              ElevatedButton.icon(
+                onPressed: _isShaking ? _stopManualShake : _startManualShake,
+                icon: Icon(_isShaking ? Icons.stop : Icons.play_arrow),
+                label: Text(_isShaking ? 'Berhenti Kocok' : 'Mulai Kocok'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isShaking ? Colors.red.shade400 : AppColors.emeraldIslamic,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
               ),
             ] else if (_content == null) ...[
               const CircularProgressIndicator(),

@@ -30,7 +30,7 @@ Route::group(['prefix' => 'v1'], function () {
         Route::post('/licenses/release', [LicenseController::class, 'release']);
 
         // Content
-        Route::get('/shake', [ContentController::class, 'shake']);
+        Route::post('/licenses/shake', [ContentController::class, 'shake']);
 
         // Challenge & Journal
         Route::get('/challenges', [ChallengeController::class, 'index']);
