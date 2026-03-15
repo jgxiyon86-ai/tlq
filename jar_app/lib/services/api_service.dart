@@ -28,6 +28,27 @@ class ApiService {
     throw Exception(data['message'] ?? 'Login gagal');
   }
 
+  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/register'),
+      headers: {'Accept': 'application/json'},
+      body: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': password,
+      },
+    );
+    final data = json.decode(response.body);
+    if (response.statusCode == 201) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', data['token']);
+      await prefs.setString('user', json.encode(data['user']));
+      return data;
+    }
+    throw Exception(data['message'] ?? 'Registrasi gagal');
+  }
+
   static Future<Map<String, dynamic>> googleLogin(String email, String name, String idToken, {String? photoUrl}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/login/google'),

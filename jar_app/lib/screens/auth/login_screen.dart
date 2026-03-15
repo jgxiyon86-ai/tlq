@@ -2,7 +2,10 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:jar_app/core/app_colors.dart';
 import 'package:jar_app/screens/main/home_screen.dart';
+import 'package:jar_app/screens/auth/register_screen.dart';
 import 'package:jar_app/services/api_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,32 +40,41 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
+
   void _handleGoogleLogin() async {
-    // Show a mock account picker
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text('Pilih Akun Google', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-            const Divider(),
-            _buildMockAccount('Ahmad Fauzi', 'ahmad.fauzi@gmail.com', Colors.blue),
-            _buildMockAccount('Fatimah Az-Zahra', 'fatimah.azzahra@gmail.com', Colors.pink),
-            ListTile(
-              leading: const Icon(Icons.add_circle_outline),
-              title: const Text('Gunakan akun lain'),
-              onTap: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      ),
-    );
+    setState(() => _isLoading = true);
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      await ApiService.googleLogin(
+        googleUser.email,
+        googleUser.displayName ?? '',
+        googleUser.id,
+      );
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login Gagal: ${e.toString()}'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Widget _buildMockAccount(String name, String email, Color color) {
@@ -95,19 +107,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleFacebookLogin() async {
-    // Simulate Facebook account (usually direct login)
     setState(() => _isLoading = true);
     try {
-      await ApiService.facebookLogin('user.fb@facebook.com', 'Facebook User', 'fb_123456');
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
+      final LoginResult result = await FacebookAuth.instance.login();
+      if (result.status == LoginStatus.success) {
+        final userData = await FacebookAuth.instance.getUserData();
+        await ApiService.facebookLogin(
+          userData['email'] ?? '',
+          userData['name'] ?? '',
+          userData['id'],
         );
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Facebook Login Gagal: ${e.toString()}'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -288,26 +311,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: _isLoading ? null : _handleGoogleLogin,
                         icon: Icons.email,
                         color: Colors.redAccent,
-                        label: 'Google',
-                      ),
-                      _buildSocialButton(
-                        onTap: _isLoading ? null : _handleFacebookLogin,
-                        icon: Icons.facebook,
-                        color: Colors.blue.shade800,
-                        label: 'Facebook',
-                      ),
-                      _buildSocialButton(
-                        onTap: _isLoading ? null : _handlePhoneLogin,
-                        icon: Icons.phone,
-                        color: Colors.green,
-                        label: 'WhatsApp',
+                        label: 'Google Login',
                       ),
                     ],
                   ),
                   
                   const SizedBox(height: 40),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      );
+                    },
                     child: const Text(
                       'Belum punya akun? Daftar Sekarang',
                       style: TextStyle(color: AppColors.textLight),
