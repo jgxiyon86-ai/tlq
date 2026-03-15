@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class JournalEntry extends Model
+{
+    protected $fillable = [
+        'user_id',
+        'challenge_id',
+        'content_id',
+        'day_number',
+        'entry_date',
+        'before_pesan',
+        'before_perasaan',
+        'before_action',
+        'after_berhasil',
+        'after_perubahan',
+        'after_perasaan',
+        'is_completed',
+    ];
+
+    protected $casts = [
+        'entry_date' => 'date',
+        'is_completed' => 'boolean',
+    ];
+
+    public function challenge()
+    {
+        return $this->belongsTo(Challenge::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function content()
+    {
+        return $this->belongsTo(Content::class);
+    }
+
+    // True if user has filled the before section
+    public function getHasBeforeAttribute(): bool
+    {
+        return !is_null($this->before_pesan);
+    }
+
+    // True if user has filled the after section
+    public function getHasAfterAttribute(): bool
+    {
+        return !is_null($this->after_berhasil);
+    }
+}
