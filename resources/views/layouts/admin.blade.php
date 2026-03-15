@@ -34,8 +34,8 @@
     <nav class="bg-emerald-islamic text-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gold-islamic rounded-full flex items-center justify-center shadow-inner">
-                    <span class="text-xl font-bold">Q</span>
+                <div class="w-10 h-10 rounded-full overflow-hidden shadow-inner flex items-center justify-center border-2 border-amber-400">
+                    <img src="/logo_tlq.png" alt="TLQ Logo" class="w-full h-full object-cover">
                 </div>
                 <h1 class="text-xl font-bold tracking-tight">TLQ Jar <span class="text-amber-400 font-light text-sm italic">Admin</span></h1>
             </div>
