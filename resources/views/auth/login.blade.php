@@ -17,8 +17,8 @@
 
     <div class="w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl relative z-10 border border-emerald-50">
         <div class="text-center mb-10">
-            <div class="w-20 h-20 bg-emerald-islamic rounded-3xl rotate-12 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-900/30">
-                <span class="text-3xl font-bold text-amber-400 -rotate-12">Q</span>
+            <div class="w-20 h-20 rounded-3xl overflow-hidden flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-900/30 border-4 border-amber-400">
+                <img src="/logo_tlq.png" alt="TLQ Logo" class="w-full h-full object-cover">
             </div>
             <h1 class="text-2xl font-bold text-gray-800">Assalamu'alaikum</h1>
             <p class="text-gray-500 mt-2">Selamat datang di Panel Admin TLQ Jar</p>
