@@ -194,15 +194,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Text('Profil Saya',
             style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _isLoading ? null : _syncManualData,
-            icon: _isLoading 
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.sync),
-            tooltip: 'Sinkronisasi Data Offline',
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -356,36 +347,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
 
-            const SizedBox(height: 16),
-
-            // Sync Manual Section
-            _SectionCard(
-               title: '🔄 Sinkronisasi Offline',
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   Text(
-                     'Ambil data panduan sekarang agar bisa dibaca saat tidak ada internet.',
-                     style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
-                   ),
-                   const SizedBox(height: 12),
-                   SizedBox(
-                     width: double.infinity,
-                     child: OutlinedButton.icon(
-                       onPressed: _isLoading ? null : _syncManualData,
-                       icon: const Icon(Icons.download_for_offline_outlined),
-                       label: const Text('Download Panduan Offline'),
-                       style: OutlinedButton.styleFrom(
-                         padding: const EdgeInsets.symmetric(vertical: 12),
-                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                       ),
-                     ),
-                   ),
-                 ],
-               ),
-            ),
-
-            const SizedBox(height: 16),
 
             // Logout button
             SizedBox(
