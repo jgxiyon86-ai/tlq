@@ -438,17 +438,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildChallengeCard(Map<String, dynamic> challenge) {
-    final seriesName = challenge['series']?['name'] ?? 'TLQ';
-    final currentDay = challenge['current_day'] as int;
-    final totalDays = challenge['total_days'] as int;
-    final progress = currentDay / totalDays;
-    final seriesId = challenge['series_id'].toString();
-    final series = _allSeries.firstWhere(
-        (s) => s['id'] == seriesId,
-        orElse: () => {'color': AppColors.emeraldIslamic});
-    final color = series['color'] as Color;
+    try {
+      final seriesName = challenge['series']?['name'] ?? 'TLQ';
+      final currentDay = int.tryParse(challenge['current_day'].toString()) ?? 1;
+      final totalDays = int.tryParse(challenge['total_days'].toString()) ?? 40;
+      final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0;
+      final seriesId = challenge['series_id']?.toString() ?? '';
+      
+      final series = _allSeries.firstWhere(
+          (s) => s['id'] == seriesId,
+          orElse: () => {'color': AppColors.emeraldIslamic});
+      final color = series['color'] as Color;
 
-    return FadeInUp(
+      return FadeInUp(
       child: GestureDetector(
         onTap: () async {
           await Navigator.push(
@@ -510,6 +512,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+    } catch (e) {
+      return const SizedBox.shrink();
+    }
   }
 
   void _showActivateChallengeDialog() {
