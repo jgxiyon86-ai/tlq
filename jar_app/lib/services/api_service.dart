@@ -163,7 +163,8 @@ class ApiService {
     final dataJars = json.decode(responseJars.body);
 
     final dashboardData = {
-      'active_challenges': data['challenges'] ?? [],
+      'active_challenges': data['challenges'] is List ? data['challenges'] : 
+          (data['challenges'] is Map ? data['challenges'].values.toList() : []),
       'jars': dataJars is List ? dataJars : (dataJars['licenses'] ?? []),
     };
 

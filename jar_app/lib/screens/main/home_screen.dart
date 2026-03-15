@@ -437,11 +437,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildChallengeCard(Map<String, dynamic> challenge) {
+  Widget _buildChallengeCard(dynamic challengeData) {
+    if (challengeData == null || challengeData is! Map) {
+      return const SizedBox.shrink();
+    }
+    
     try {
+      final challenge = Map<String, dynamic>.from(challengeData);
       final seriesName = challenge['series']?['name'] ?? 'TLQ';
-      final currentDay = int.tryParse(challenge['current_day'].toString()) ?? 1;
-      final totalDays = int.tryParse(challenge['total_days'].toString()) ?? 40;
+      final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
+      final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
       final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0;
       final seriesId = challenge['series_id']?.toString() ?? '';
       
