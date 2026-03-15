@@ -86,6 +86,23 @@ class ProductionDataSeeder extends Seeder
             Content::updateOrCreate(['id' => $c['id']], $c);
         }
 
+        // 4. Seed Manual Pages (Guides)
+        $series_list = Series::all();
+        foreach ($series_list as $s) {
+            \App\Models\ManualPage::updateOrCreate(
+                ['series_id' => $s->id, 'page_number' => 1],
+                ['title' => 'Cara Menggunakan TLQ Jar', 'content' => "1. Niatkan karena Allah.\n2. Duduk dengan tenang.\n3. Ambil satu gulungan secara acak."]
+            );
+            \App\Models\ManualPage::updateOrCreate(
+                ['series_id' => $s->id, 'page_number' => 2],
+                ['title' => 'Doa Sebelum Membaca', 'content' => "اللَّهُمَّ انْفَعْنِي بِمَا عَلَّمْتَنِي وَعَلِّمْنِي مَا يَنْفَعُنِي وَزِدْنِي عِلْمًا\n\"Ya Allah, berilah manfaat atas apa yang Engkau ajarkan kepadaku, dan ajarkanlah kepadaku apa yang bermanfaat bagiku, dan tambahkanlah ilmu kepadaku.\""]
+            );
+            \App\Models\ManualPage::updateOrCreate(
+                ['series_id' => $s->id, 'page_number' => 3],
+                ['title' => 'Siap Berinteraksi?', 'content' => "Tutup panduan ini dan silakan goyang HP Anda untuk mendapatkan pesan cinta dari Al-Quran hari ini."]
+            );
+        }
+
         Schema::enableForeignKeyConstraints();
     }
 }
