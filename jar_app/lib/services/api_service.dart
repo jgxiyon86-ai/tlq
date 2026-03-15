@@ -152,10 +152,21 @@ class ApiService {
     );
     final dataJars = json.decode(responseJars.body);
 
-    return {
+    final dashboardData = {
       'active_challenges': data['challenges'] ?? [],
       'jars': dataJars is List ? dataJars : (dataJars['licenses'] ?? []),
     };
+
+    // PROACTIVE SYNC: Cache manual pages for all owned series
+    for (var jar in (dashboardData['jars'] as List)) {
+      final sId = jar['series_id'].toString();
+      try {
+        final pages = await getManualPages(sId);
+        await prefs.setString('cached_manual_$sId', json.encode(pages));
+      } catch (_) {}
+    }
+
+    return dashboardData;
   }
 
   static Future<Map<String, dynamic>> updateProfile(String name, String nickname) async {
@@ -184,6 +195,27 @@ class ApiService {
 
   static Future<Map<String, dynamic>> activateJar(String key) async {
     return _authenticatedPost('$baseUrl/licenses/activate', {'license_key': key});
+  }
+
+  static Future<List<dynamic>> getManualPages(String seriesId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/manual/$seriesId'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        await prefs.setString('cached_manual_$seriesId', json.encode(data));
+        return data;
+      }
+    } catch (e) {
+      final cached = prefs.getString('cached_manual_$seriesId');
+      if (cached != null) return json.decode(cached);
+    }
+    return [];
   }
 
   static Future<List<dynamic>> getBySeries(String seriesId) async {

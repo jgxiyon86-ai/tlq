@@ -32,7 +32,7 @@ class _ManualBookScreenState extends State<ManualBookScreen> {
 
   Future<void> _fetchPages() async {
     try {
-      final pages = await ApiService.getBySeries(widget.series['id'].toString());
+      final pages = await ApiService.getManualPages(widget.series['id'].toString());
       setState(() {
         _pages = pages;
         _isLoading = false;
