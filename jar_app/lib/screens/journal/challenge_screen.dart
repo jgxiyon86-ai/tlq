@@ -4,6 +4,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jar_app/core/app_colors.dart';
 import 'package:jar_app/services/api_service.dart';
+import 'package:jar_app/screens/jar/manual_book_screen.dart';
 import 'finished_challenge_screen.dart';
 import 'challenge_history_screen.dart';
 
@@ -62,7 +63,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     }
   }
 
-  // --- GACHA ANIMATION ---
   final List<String> _shuffleTexts = [
     'Sedang mengacak hikmah...',
     'Menunggu petunjuk terbaik...',
@@ -70,6 +70,26 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     'Bismillah, mohon petunjuk-Mu...',
     'Hati yang bersih menerima cahaya...',
   ];
+
+  Future<void> _showManualAndStart() async {
+    final series = widget.challenge['series'];
+    if (series != null) {
+      final bool? proceed = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ManualBookScreen(
+            series: series,
+            isFromChallenge: true, // Tell manual to pop back when done
+          ),
+        ),
+      );
+      if (proceed == true) {
+        _startGacha();
+      }
+    } else {
+      _startGacha();
+    }
+  }
 
   void _startGacha() {
     if (_isRolling) {
@@ -335,7 +355,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                            onTap: _isLoading ? null : _startGacha,
+                            onTap: _isLoading ? null : (_isRolling ? _startGacha : _showManualAndStart),
                             child: Column(
                               children: [
                                 Stack(

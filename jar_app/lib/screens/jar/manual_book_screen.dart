@@ -7,11 +7,13 @@ import 'package:jar_app/services/api_service.dart';
 class ManualBookScreen extends StatefulWidget {
   final Map<String, dynamic> series;
   final String licenseKey;
+  final bool isFromChallenge;
 
   const ManualBookScreen({
     super.key,
     required this.series,
-    required this.licenseKey,
+    this.licenseKey = '',
+    this.isFromChallenge = false,
   });
 
   @override
@@ -103,15 +105,19 @@ class _ManualBookScreenState extends State<ManualBookScreen> {
                         FadeInRight(
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ShakeScreen(
-                                    series: widget.series,
-                                    licenseKey: widget.licenseKey,
+                              if (widget.isFromChallenge) {
+                                Navigator.pop(context, true);
+                              } else {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ShakeScreen(
+                                      series: widget.series,
+                                      licenseKey: widget.licenseKey,
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.goldIslamic,
@@ -119,7 +125,8 @@ class _ManualBookScreenState extends State<ManualBookScreen> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                             ),
-                            child: const Text('Mulai Kocok Jar', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text(widget.isFromChallenge ? 'Mulai Tantangan' : 'Mulai Kocok Jar', 
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                     ],
