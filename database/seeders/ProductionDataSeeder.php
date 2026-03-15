@@ -8,6 +8,7 @@ use App\Models\Series;
 use App\Models\Content;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ProductionDataSeeder extends Seeder
 {
