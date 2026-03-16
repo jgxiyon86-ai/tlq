@@ -47,18 +47,38 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     setState(() => _isLoading = true);
     try {
       final history = await ApiService.getChallengeHistory(widget.challenge['id']);
-      final day = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
-      final entry = history.firstWhere(
-        (e) => int.tryParse(e['day_number']?.toString() ?? '0') == day,
-        orElse: () => null,
-      );
+      
+      // Priority 1: find an INCOMPLETE entry (already rolled, not yet finished before/after)
+      Map<String, dynamic>? found = history
+          .cast<Map<String, dynamic>>()
+          .where((e) => e['content'] != null && e['is_completed'] == false)
+          .fold<Map<String, dynamic>?>(null, (prev, e) => prev ?? e);
+
+      // Priority 2: find today's entry by date
+      if (found == null) {
+        final today = DateTime.now().toIso8601String().substring(0, 10);
+        found = history
+            .cast<Map<String, dynamic>>()
+            .where((e) => e['entry_date']?.toString().startsWith(today) == true)
+            .fold<Map<String, dynamic>?>(null, (prev, e) => prev ?? e);
+      }
+
+      // Priority 3: find by current_day from widget
+      if (found == null) {
+        final day = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
+        found = history
+            .cast<Map<String, dynamic>>()
+            .where((e) => int.tryParse(e['day_number']?.toString() ?? '0') == day)
+            .fold<Map<String, dynamic>?>(null, (prev, e) => prev ?? e);
+      }
+
       if (mounted) {
         setState(() {
-          _todayEntry = entry;
+          _todayEntry = found;
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
   }
