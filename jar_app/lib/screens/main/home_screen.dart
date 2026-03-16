@@ -54,14 +54,19 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _myJars = data['jars'];
-          // Filter challenges: only show if they have a corresponding JAR license
+          // Filter challenges: show only those with active licenses
           final rawChallenges = data['active_challenges'] as List;
-          final ownedSeriesIds = _myJars.map((j) => j['series_id'].toString()).toSet();
-          
-          _myChallenges = rawChallenges
-              .where((c) => ownedSeriesIds.contains(c['series_id'].toString()))
-              .toList();
-          
+          // Use toString() on BOTH sides — API returns int, _allSeries has String ids
+          final ownedSeriesIds = (_myJars)
+              .map((j) => j['series_id']?.toString() ?? '')
+              .where((s) => s.isNotEmpty)
+              .toSet();
+
+          _myChallenges = rawChallenges.where((c) {
+            final sid = c['series_id']?.toString() ?? '';
+            return ownedSeriesIds.contains(sid);
+          }).toList();
+
           _isLoading = false;
         });
       }
@@ -326,6 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildJarCard(Map<String, dynamic> series) {
+    // series['id'] is always String (declared above). Jar's series_id from API is int.
     final id = series['id'].toString();
     final name = series['name'] as String;
     final color = series['color'] as Color;
@@ -441,12 +447,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
       final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
       final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0;
+      // API returns series_id as int; _allSeries has String ids — normalise both sides
       final seriesId = challenge['series_id']?.toString() ?? '';
-      
+
       final series = _allSeries.firstWhere(
-          (s) => s['id'] == seriesId,
+          (s) => s['id'].toString() == seriesId,
           orElse: () => {'color': AppColors.emeraldIslamic});
-      final color = series['color'] as Color;
+      final color = (series['color'] is Color)
+          ? series['color'] as Color
+          : AppColors.emeraldIslamic;
 
       return FadeInUp(
       child: GestureDetector(
@@ -533,8 +542,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Only allow selecting series that the user owns a license for
-    final ownedSeriesIds = _myJars.map((j) => j['series_id'].toString()).toSet();
-    final availableSeries = _allSeries.where((s) => ownedSeriesIds.contains(s['id'].toString())).toList();
+    // Both sides must be String — API returns int, _allSeries has String
+    final ownedSeriesIds = _myJars
+        .map((j) => j['series_id']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toSet();
+    final availableSeries = _allSeries
+        .where((s) => ownedSeriesIds.contains(s['id'].toString()))
+        .toList();
 
     showDialog(
       context: context,
