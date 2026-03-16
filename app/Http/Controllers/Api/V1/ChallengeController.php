@@ -187,8 +187,8 @@ class ChallengeController extends Controller
      */
     public function saveBefore(Request $request, JournalEntry $entry)
     {
-        if ($entry->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($entry->user_id != $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
         $request->validate([
@@ -214,8 +214,8 @@ class ChallengeController extends Controller
      */
     public function saveAfter(Request $request, JournalEntry $entry)
     {
-        if ($entry->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($entry->user_id != $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
         if ($entry->is_completed) {
@@ -265,8 +265,8 @@ class ChallengeController extends Controller
      */
     public function history(Request $request, Challenge $challenge)
     {
-        if ($challenge->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($challenge->user_id != $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
         $entries = $challenge->journalEntries()
@@ -282,8 +282,8 @@ class ChallengeController extends Controller
      */
     public function saveFinalReflections(Request $request, Challenge $challenge)
     {
-        if ($challenge->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($challenge->user_id != $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
         $request->validate([

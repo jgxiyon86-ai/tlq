@@ -22,6 +22,8 @@ class JournalEntry extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
+        'challenge_id' => 'integer',
         'entry_date' => 'date',
         'is_completed' => 'boolean',
     ];
