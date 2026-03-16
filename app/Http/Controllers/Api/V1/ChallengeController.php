@@ -33,12 +33,11 @@ class ChallengeController extends Controller
             ->where('is_activated', true)
             ->exists();
 
-        // If 'confirmed' flag is not true and user has no license, ask for confirmation
-        if (!$hasLicense && !$request->boolean('confirmed')) {
+        // Strict Check: User MUST have a license. Cannot bypass with 'confirmed' anymore.
+        if (!$hasLicense) {
             return response()->json([
-                'message' => 'Anda belum mempunyai Jar ' . Series::find($request->series_id)->name . ".\n\nYakin ingin tetap menantang diri sendiri selama " . $totalDays . " hari dengan materi ini?\n\nJika ingin aktivasi, silahkan hubungi Distributor TLQ anda (08995295781) untuk mendapatkan kode aktivasi.",
-                'needs_confirmation' => true,
-            ], 200); 
+                'message' => 'Anda belum mengaktifkan Jar ' . Series::find($request->series_id)->name . ".\n\nSilahkan hubungi Distributor TLQ anda (08995295781) untuk mendapatkan kode aktivasi.",
+            ], 403); 
         }
 
         // Check if challenge already exists
@@ -106,11 +105,7 @@ class ChallengeController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate([
-            'device_id' => 'required|string',
-        ]);
-
-        // STRICT CHECK: User must have an ACTIVATED license for this series on THIS device
+        // Check: User must have an ACTIVATED license for this series
         $license = License::where('activated_by', $request->user()->id)
             ->where('series_id', $challenge->series_id)
             ->where('is_activated', true)
@@ -122,11 +117,7 @@ class ChallengeController extends Controller
             ], 403);
         }
 
-        if ($license->device_id !== $request->device_id) {
-            return response()->json([
-                'message' => 'Akses Ditolak. Lisensi Jar ini terdaftar di perangkat lain. Silakan logout dari perangkat lama anda atau hubungi Distributor.'
-            ], 403);
-        }
+        // Device check removed — ownership check above is sufficient protection.
 
         // 1. Check if there's any INCOMPLETE entry first
         $incompleteEntry = JournalEntry::where('challenge_id', $challenge->id)
