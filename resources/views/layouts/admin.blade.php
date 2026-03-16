@@ -44,17 +44,19 @@
                 
                 <!-- Monitoring Dropdown Submenu -->
                 <div class="relative group">
-                    <button class="hover:text-amber-400 transition flex items-center space-x-1 {{ request()->routeIs('admin.monitoring.*') ? 'text-amber-400' : '' }}">
+                    <button class="hover:text-amber-400 transition py-4 flex items-center space-x-1 {{ request()->routeIs('admin.monitoring.*') ? 'text-amber-400' : '' }}">
                         <span>Monitoring</span>
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div class="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 hidden group-hover:block animate-fade-in">
-                        <a href="{{ route('admin.monitoring.challenges') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition">
-                            📊 Monitor Tantangan
-                        </a>
-                        <a href="{{ route('admin.monitoring.licenses') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition">
-                            🔑 Monitor License
-                        </a>
+                    <div class="absolute left-0 top-full w-48 hidden group-hover:block z-50 pt-1">
+                        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fade-in">
+                            <a href="{{ route('admin.monitoring.challenges') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition">
+                                📊 Monitor Tantangan
+                            </a>
+                            <a href="{{ route('admin.monitoring.licenses') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition">
+                                🔑 Monitor License
+                            </a>
+                        </div>
                     </div>
                 </div>
 
