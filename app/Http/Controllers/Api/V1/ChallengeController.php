@@ -264,7 +264,7 @@ class ChallengeController extends Controller
 
         $entries = $challenge->journalEntries()
             ->with('content')
-            ->orderBy('day_number')
+            ->orderByDesc('id') // Always newest first
             ->get();
 
         return response()->json(['entries' => $entries]);

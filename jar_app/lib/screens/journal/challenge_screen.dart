@@ -59,11 +59,13 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       
       Map<String, dynamic>? found;
 
-      // Priority 1: Any entry that is NOT completed (needs before/after)
+      // Priority 1: Any entry that has CONTENT and is NOT completed
       for (var e in history) {
         final m = Map<String, dynamic>.from(e as Map);
+        final hasContent = m['content'] != null;
         final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
-        if (!isCompleted) {
+        
+        if (hasContent && !isCompleted) {
           found = m;
           break;
         }
@@ -139,11 +141,20 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   Future<void> _doRoll() async {
     try {
-      await ApiService.rollContent(widget.challenge['id']);
+      final result = await ApiService.rollContent(widget.challenge['id']);
+      if (mounted && result['entry'] != null) {
+        setState(() {
+          _todayEntry = Map<String, dynamic>.from(result['entry'] as Map);
+          _isRevealing = false;
+        });
+      }
     } catch (e) {
-      // Ignore — we reload anyway; existing incomplete entry also fine
+      if (mounted) {
+        setState(() => _isRevealing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      }
     } finally {
-      if (mounted) setState(() => _isRevealing = false);
       await _loadTodayEntry();
     }
   }
