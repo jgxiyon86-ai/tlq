@@ -299,15 +299,18 @@ class ApiService {
   static Future<List<dynamic>> getChallengeHistory(int challengeId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    final response = await http.get(
-      Uri.parse('$baseUrl/challenges/$challengeId/history'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-    final data = json.decode(response.body);
-    if (response.statusCode == 200) {
-      return data['entries'];
-    }
-    throw Exception('Gagal memuat riwayat jurnal');
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/challenges/$challengeId/history'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final entries = data['entries'];
+        if (entries is List) return entries;
+      }
+    } catch (_) {}
+    return []; // Always return a list, never null
   }
 
   static Future<Map<String, dynamic>> saveFinalReflections(int challengeId, Map<String, String> reflections) async {

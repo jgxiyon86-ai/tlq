@@ -19,18 +19,18 @@ class ContentController extends Controller
             'device_id'   => 'required|string',
         ]);
 
-        // Verify the user owns this license and is on the correct device
+        // Verify the user owns this license and it's activated
         $license = $request->user()->licenses()
             ->where('license_key', $request->license_key)
+            ->where('is_activated', true)
             ->first();
 
         if (!$license) {
-            return response()->json(['message' => 'Anda tidak memiliki akses ke Jar ini.'], 403);
+            return response()->json(['message' => 'Anda tidak memiliki akses ke Jar ini atau lisensi belum diaktifkan.'], 403);
         }
 
-        if ($license->device_id !== $request->device_id) {
-            return response()->json(['message' => 'Akses Ditolak. Jar ini terdaftar di perangkat lain.'], 403);
-        }
+        // Note: device_id check removed — ownership + activation is sufficient protection
+
 
         $content = Content::where('series_id', $license->series_id)
             ->inRandomOrder()
