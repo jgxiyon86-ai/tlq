@@ -121,7 +121,15 @@
                     <div class="ml-4 flex-1">
                         <div class="flex justify-between items-start">
                             <p class="font-bold text-gray-800 text-sm">{{ $e->user->name }}</p>
-                            <span class="text-[10px] text-gray-400 px-2 py-0.5 bg-gray-100 rounded-full">Hari {{ $e->day_number }}</span>
+                            <div class="flex flex-col items-end">
+                                <span class="text-[10px] text-gray-400 px-2 py-0.5 bg-gray-100 rounded-full mb-1">Hari {{ $e->day_number }}</span>
+                                @if($e->is_catch_up)
+                                    <span class="text-[8px] font-black text-amber-600 flex items-center bg-amber-50 px-1.5 py-0.5 rounded-lg border border-amber-100 uppercase tracking-tighter">
+                                        <svg class="w-2.5 h-2.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3V1L8 11h2v8l3-10h-2V3z"></path></svg>
+                                        Akselerasi
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                         <p class="text-xs text-emerald-600 italic mt-1 line-clamp-1">"{{ $e->content->surah_ayah }}"</p>
                         <p class="text-[10px] text-gray-400 mt-1">{{ $e->updated_at->diffForHumans() }}</p>

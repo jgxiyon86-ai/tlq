@@ -22,6 +22,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   // --- Entry state ---
   Map<String, dynamic>? _todayEntry;
+  int _currentDay = 1;
+  int _debtDays = 0;
+  bool _isCatchUpMode = false;
   bool _isLoading = true;
 
   // --- Shake / Roll state ---
@@ -37,6 +40,8 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 90),
     );
+    _currentDay = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
+    _debtDays = int.tryParse(widget.challenge['debt_days']?.toString() ?? '0') ?? 0;
     _loadTodayEntry();
   }
 
@@ -65,7 +70,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
       final history = await ApiService.getChallengeHistory(widget.challenge['id']);
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-      final currentDayChallenge = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
+      
+      // Get the freshest current_day from the widget, but we'll also check history
+      int currentDayChallenge = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
       
       Map<String, dynamic>? found;
 
@@ -78,23 +85,26 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         }
       }
 
-      // Priority 2: Any entry that is NOT completed
+      // Priority 2: Any entry that is NOT completed (The "Stuck" entry)
       if (found == null) {
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
           final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
           if (!isCompleted) {
             found = m;
+            // Also update our local currentDayChallenge to match this found entry
+            currentDayChallenge = int.tryParse(m['day_number']?.toString() ?? '1') ?? 1;
             break;
           }
         }
       }
 
-      // Priority 3: Fallback check by date
+      // Priority 3: Fallback check by date (ONLY if NOT COMPLETED)
       if (found == null) {
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
-          if (m['entry_date']?.toString().startsWith(todayStr) == true) {
+          final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
+          if (!isCompleted && m['entry_date']?.toString().startsWith(todayStr) == true) {
             found = m;
             break;
           }
@@ -103,11 +113,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
       if (mounted) {
         setState(() {
-          // IMPORTANT: Only update if found is not null OR if we really have no data
-          // This prevents reverting to the roll screen if background refresh fails
-          if (found != null) {
-            _todayEntry = found;
-          }
+          _todayEntry = found;
+          _currentDay = currentDayChallenge; // Sync day number
+          _debtDays = int.tryParse(widget.challenge['debt_days']?.toString() ?? '0') ?? 0;
           _isLoading = false;
         });
       }
@@ -152,11 +160,13 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   Future<void> _doRoll() async {
     try {
-      final result = await ApiService.rollContent(widget.challenge['id']);
+      final result = await ApiService.rollContent(widget.challenge['id'], isCatchUp: _isCatchUpMode);
       if (mounted && result['entry'] != null) {
         setState(() {
           _todayEntry = Map<String, dynamic>.from(result['entry'] as Map);
           _isRevealing = false;
+          // After a catch up roll, we don't immediately change _isCatchUpMode 
+          // but we will refresh data which updates debt
         });
       }
     } catch (e) {
@@ -240,7 +250,12 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                   builder: (_) => FinishedChallengeScreen(challenge: result['challenge']),
                 ));
               } else {
-                setState(() { _todayEntry = Map<String, dynamic>.from(result['entry'] as Map); });
+                setState(() { 
+                  _todayEntry = Map<String, dynamic>.from(result['entry'] as Map);
+                  _currentDay = int.tryParse(result['challenge']?['current_day']?.toString() ?? '1') ?? 1;
+                  _debtDays = int.tryParse(result['challenge']?['debt_days']?.toString() ?? '0') ?? 0;
+                  if (_isCatchUpMode && _debtDays <= 0) _isCatchUpMode = false;
+                });
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('MasyaAllah! Hari ini selesai 🎉'), backgroundColor: AppColors.goldIslamic));
               }
@@ -261,7 +276,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   Widget build(BuildContext context) {
     final challenge = widget.challenge;
     final seriesName = challenge['series']?['name']?.toString() ?? 'TLQ';
-    final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
+    final currentDay = _currentDay;
     final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
     final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0;
 
@@ -396,6 +411,34 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
                     if (hasAfter) ...[
                       const SizedBox(height: 24),
+                      if (_debtDays > 0 && !_isCatchUpMode)
+                        FadeInUp(
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.amber.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('⚡', style: TextStyle(fontSize: 20)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Anda punya ketertinggalan $_debtDays hari. Ingin mengejar sekarang?',
+                                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => setState(() => _isCatchUpMode = true),
+                                  child: const Text('KEJAR', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.amber)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       FadeInUp(
                         child: Container(
                           padding: const EdgeInsets.all(20),
@@ -441,10 +484,36 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   // Widget: Greeting + Kocok button
   // ─────────────────────────────────────────────
   Widget _buildGreetingAndKocok(String seriesName, int day) {
-    final color = AppColors.emeraldIslamic;
+    final color = _isCatchUpMode ? Colors.amber.shade700 : AppColors.emeraldIslamic;
     return FadeInUp(
       child: Column(
         children: [
+          if (_isCatchUpMode)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.amber.withAlpha(50), blurRadius: 10)],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('⚡', style: TextStyle(fontSize: 14)),
+                    const SizedBox(width: 8),
+                    Text('MODE KEJAR KETINGGALAN', 
+                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10)),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => setState(() => _isCatchUpMode = false),
+                      child: const Icon(Icons.cancel, color: Colors.white70, size: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           // Salam card
           Container(

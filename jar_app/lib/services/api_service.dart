@@ -168,12 +168,12 @@ class ApiService {
       'jars': dataJars is List ? dataJars : (dataJars['licenses'] ?? []),
     };
 
-    // PROACTIVE SYNC: Cache manual pages for all owned series
+    // PROACTIVE SYNC: Cache manual pages AND contents for all owned series
     for (var jar in (dashboardData['jars'] as List)) {
       final sId = jar['series_id'].toString();
       try {
-        final pages = await getManualPages(sId);
-        await prefs.setString('cached_manual_$sId', json.encode(pages));
+        await getManualPages(sId); // Cache manual
+        await getBySeries(sId);     // Cache contents
       } catch (_) {}
     }
 
@@ -234,9 +234,9 @@ class ApiService {
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 10));
       
-      final data = json.decode(response.body);
       if (response.statusCode == 200) {
-        await prefs.setString('cached_manual_$seriesId', json.encode(data));
+        final data = json.decode(response.body);
+        await prefs.setString('cached_manual_$seriesId', response.body);
         return data;
       }
     } catch (e) {
@@ -249,12 +249,25 @@ class ApiService {
   static Future<List<dynamic>> getBySeries(String seriesId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    final response = await http.get(
-      Uri.parse('$baseUrl/contents?series_id=$seriesId'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-    final data = json.decode(response.body);
-    return data['contents'] ?? [];
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/contents?series_id=$seriesId'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        await prefs.setString('cached_contents_$seriesId', response.body);
+        final data = json.decode(response.body);
+        return data['contents'] ?? [];
+      }
+    } catch (_) {
+      final cached = prefs.getString('cached_contents_$seriesId');
+      if (cached != null) {
+        final data = json.decode(cached);
+        return data['contents'] ?? [];
+      }
+    }
+    return [];
   }
 
   static Future<Map<String, dynamic>> shakeJar(String licenseKey) async {
@@ -273,10 +286,11 @@ class ApiService {
     });
   }
 
-  static Future<Map<String, dynamic>> rollContent(int challengeId) async {
+  static Future<Map<String, dynamic>> rollContent(int challengeId, {bool isCatchUp = false}) async {
     final devId = await getDeviceId();
     return _authenticatedPost('$baseUrl/challenges/$challengeId/roll', {
       'device_id': devId,
+      'is_catch_up': isCatchUp ? '1' : '0',
     });
   }
 

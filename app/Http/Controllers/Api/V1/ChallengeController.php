@@ -95,6 +95,11 @@ class ChallengeController extends Controller
                     ->where('series_id', $c->series_id)
                     ->where('is_activated', true)
                     ->exists();
+
+                // Calculate debt days for "Catch Up" feature
+                $startedAt = $c->started_at ?? $c->created_at;
+                $targetDay = now()->diffInDays($startedAt) + 1;
+                $c->debt_days = max(0, $targetDay - $c->current_day);
                     
                 return $c;
             });
@@ -139,22 +144,38 @@ class ChallengeController extends Controller
             ], 200);
         }
 
-        // 2. Check if a NEW roll/entry was already performed TODAY (Calendar Day Lock)
-        // Note: entry_date is set to the date the content was rolled
-        $todayRollExists = JournalEntry::where('challenge_id', $challenge->id)
-            ->where('entry_date', now()->toDateString())
-            ->exists();
+        $isCatchUp = $request->boolean('is_catch_up');
 
-        if ($todayRollExists) {
-            $lastEntry = JournalEntry::where('challenge_id', $challenge->id)
-                ->orderBy('day_number', 'desc')
-                ->first();
+        // 2. Enforce "1 Day 1 Ayat" for Normal Rolls (Istiqomah)
+        if (!$isCatchUp) {
+            $todayNormalExists = JournalEntry::where('challenge_id', $challenge->id)
+                ->where('entry_date', now()->toDateString())
+                ->where('is_catch_up', false)
+                ->exists();
 
-            return response()->json([
-                'message' => 'MasyaAllah! Kamu sudah menyelesaikan tugasmu hari ini. Silakan kembali besok pagi untuk tantangan berikutnya!',
-                'entry' => $lastEntry->load('content.series'),
-                'already_done_today' => true
-            ], 200);
+            if ($todayNormalExists) {
+                $lastEntry = JournalEntry::where('challenge_id', $challenge->id)
+                    ->where('entry_date', now()->toDateString())
+                    ->where('is_catch_up', false)
+                    ->first();
+
+                return response()->json([
+                    'message' => 'Alhamdulillah, jatah Istiqomah hari ini sudah diambil. Silahkan kembali besok, atau gunakan menu "Kejar Ketertinggalan" jika ada.',
+                    'entry' => $lastEntry->load('content.series'),
+                    'already_done_today' => true
+                ], 200);
+            }
+        } else {
+            // Validate if catch-up is allowed (must have debt)
+            $startedAt = $challenge->started_at ?? $challenge->created_at;
+            $targetDay = now()->diffInDays($startedAt) + 1;
+            $debt = max(0, $targetDay - $challenge->current_day);
+
+            if ($debt <= 0) {
+                return response()->json([
+                    'message' => 'Luar biasa! Progres Anda sudah sesuai jadwal (Istiqomah). Tidak perlu mengejar ketertinggalan.'
+                ], 422);
+            }
         }
 
         $day = $challenge->current_day;
@@ -174,6 +195,7 @@ class ChallengeController extends Controller
             'content_id' => $content->id,
             'day_number' => $day,
             'entry_date' => now()->toDateString(),
+            'is_catch_up' => $isCatchUp,
         ]);
 
         return response()->json([

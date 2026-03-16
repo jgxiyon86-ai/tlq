@@ -16,9 +16,9 @@ class JournalEntry extends Model
         'before_perasaan',
         'before_action',
         'after_berhasil',
-        'after_perubahan',
         'after_perasaan',
         'is_completed',
+        'is_catch_up',
     ];
 
     protected $casts = [
@@ -26,6 +26,7 @@ class JournalEntry extends Model
         'challenge_id' => 'integer',
         'entry_date' => 'date',
         'is_completed' => 'boolean',
+        'is_catch_up' => 'boolean',
     ];
 
     public function challenge()
