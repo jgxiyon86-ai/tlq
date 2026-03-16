@@ -115,22 +115,22 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     setState(() => _isLoading = true);
     try {
       final result = await ApiService.rollContent(widget.challenge['id']);
-      setState(() {
-        _todayEntry = result['entry'];
-        _isLoading = false;
-      });
-      if (mounted && result['message'] != null) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result['message']),
-          backgroundColor: result['already_done_today'] == true ? Colors.orange : AppColors.emeraldIslamic,
+          content: Text(result['message'] ?? 'Ayat hari ini siap!'),
+          backgroundColor: result['already_done_today'] == true
+              ? Colors.orange
+              : AppColors.emeraldIslamic,
         ));
       }
+      // Reload today's entry from server to get full data structure
+      await _loadTodayEntry();
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        String msg = e.toString().replaceAll('Exception: ', '');
+        final msg = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.orange));
+            SnackBar(content: Text(msg), backgroundColor: Colors.red));
       }
     }
   }
@@ -277,7 +277,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                           ],
                         ),
                         const Spacer(),
-                        Text('📖 Tantangan 40 Hari',
+                        Text('📖 Tantangan $totalDays Hari',
                             style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
                         const SizedBox(height: 4),
                         Text(seriesName,

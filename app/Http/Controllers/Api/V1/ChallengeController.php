@@ -101,7 +101,8 @@ class ChallengeController extends Controller
      */
     public function rollContent(Request $request, Challenge $challenge)
     {
-        if ($challenge->user_id !== $request->user()->id) {
+        // Use loose comparison to avoid int vs string type mismatch
+        if ($challenge->user_id != $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
