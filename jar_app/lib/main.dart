@@ -15,7 +15,7 @@ void main() async {
   String? token = prefs.getString('token');
   
   if (token != null) {
-    NotificationService.scheduleDaily5AMReminder();
+    NotificationService.scheduleDailyReminders();
   }
   
   runApp(TLQApp(isLoggedIn: token != null));

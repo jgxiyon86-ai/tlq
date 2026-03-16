@@ -25,8 +25,32 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
   Future<void> _loadHistory() async {
     try {
       final entries = await ApiService.getChallengeHistory(widget.challenge['id']);
+      final currentDay = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
+      final totalDays = int.tryParse(widget.challenge['total_days']?.toString() ?? '40') ?? 40;
+      
+      // Map existing entries to their day_number for quick lookup
+      final entryMap = <int, dynamic>{};
+      for (var e in entries) {
+        final day = int.tryParse(e['day_number']?.toString() ?? '0') ?? 0;
+        if (day > 0) entryMap[day] = e;
+      }
+
+      // Generate a full list of all days
+      List<dynamic> fullHistory = [];
+      for (int i = 1; i <= totalDays; i++) {
+        if (entryMap.containsKey(i)) {
+          fullHistory.add(entryMap[i]);
+        } else if (i < currentDay) {
+          // MISSED DAY
+          fullHistory.add({'day_number': i, 'status': 'missed'});
+        } else {
+          // FUTURE / LOCKED DAY
+          fullHistory.add({'day_number': i, 'status': 'locked'});
+        }
+      }
+
       setState(() {
-        _entries = entries;
+        _entries = fullHistory.reversed.toList(); // Newest first
         _isLoading = false;
       });
     } catch (e) {
@@ -70,8 +94,71 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
   }
 
   Widget _buildHistoryCard(Map<String, dynamic> entry) {
+    final status = entry['status'] ?? 'completed';
     final bool isCompleted = entry['after_berhasil'] != null;
     final content = entry['content'] ?? {};
+
+    if (status == 'missed') {
+      return FadeInUp(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.red.withAlpha(10),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.red.withAlpha(30)),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.red.withAlpha(20),
+                child: Text('${entry['day_number']}', 
+                       style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Hari ${entry['day_number']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  Text('Terlewat / Tidak Diisi ❌', style: GoogleFonts.inter(color: Colors.red, fontSize: 12)),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (status == 'locked') {
+       return FadeInUp(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.withAlpha(10),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.withAlpha(30)),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.grey[200],
+                child: Text('${entry['day_number']}', 
+                       style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Hari ${entry['day_number']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  Text('Terkunci 🔒', style: GoogleFonts.inter(color: Colors.grey, fontSize: 12)),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    }
 
     return FadeInUp(
       child: Container(
@@ -83,13 +170,13 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
         ),
         child: ExpansionTile(
           leading: CircleAvatar(
-            backgroundColor: isCompleted ? AppColors.emeraldIslamic : Colors.grey[200],
+            backgroundColor: isCompleted ? AppColors.emeraldIslamic : Colors.orange.withAlpha(40),
             child: Text('${entry['day_number']}', 
-                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                   style: TextStyle(color: isCompleted ? Colors.white : Colors.orange, fontWeight: FontWeight.bold)),
           ),
           title: Text(content['surah_ayah'] ?? 'Ayat Hari Ini', 
                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-          subtitle: Text(isCompleted ? 'Selesai ✓' : 'Belum Selesai', 
+          subtitle: Text(isCompleted ? 'Selesai ✓' : 'Belum Selesai ⏳', 
                     style: TextStyle(color: isCompleted ? Colors.green : Colors.orange, fontSize: 12)),
           children: [
             Padding(

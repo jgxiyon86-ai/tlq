@@ -54,35 +54,42 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
+      // 1. First check if it's already in the widget data (from dashboard sync)
+      if (widget.challenge['today_entry'] != null) {
+        setState(() {
+          _todayEntry = Map<String, dynamic>.from(widget.challenge['today_entry'] as Map);
+          _isLoading = false;
+        });
+        // We still fetch history in background to refresh
+      }
+
       final history = await ApiService.getChallengeHistory(widget.challenge['id']);
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
       
       Map<String, dynamic>? found;
 
-      // Priority 1: Any entry that has CONTENT and is NOT completed
+      // Priority 1: Specifically check for an entry with today's date
       for (var e in history) {
         final m = Map<String, dynamic>.from(e as Map);
-        final hasContent = m['content'] != null;
-        final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
-        
-        if (hasContent && !isCompleted) {
+        if (m['entry_date']?.toString().startsWith(todayStr) == true) {
           found = m;
           break;
         }
       }
 
-      // Priority 2: specifically today's entry by date
+      // Priority 2: Any entry that is NOT completed (the current active task)
       if (found == null) {
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
-          if (m['entry_date']?.toString().startsWith(todayStr) == true) {
+          final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
+          if (!isCompleted) {
             found = m;
             break;
           }
         }
       }
 
-      // Priority 3: Fallback by day_number
+      // Priority 3: Search by current_day number
       if (found == null) {
         final day = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
         for (var e in history) {
