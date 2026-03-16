@@ -5,10 +5,18 @@ import 'package:jar_app/screens/auth/login_screen.dart';
 import 'package:jar_app/screens/main/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:jar_app/services/notification_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
+  
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('token');
+  
+  if (token != null) {
+    NotificationService.scheduleDaily5AMReminder();
+  }
   
   runApp(TLQApp(isLoggedIn: token != null));
 }
