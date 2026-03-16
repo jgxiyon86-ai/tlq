@@ -8,6 +8,11 @@ class License extends Model
 {
     protected $fillable = ['license_key', 'series_id', 'is_activated', 'activated_by', 'activated_at', 'print_count', 'device_id'];
 
+    protected $casts = [
+        'activated_at' => 'datetime',
+        'is_activated' => 'boolean',
+    ];
+
     public function series()
     {
         return $this->belongsTo(Series::class);

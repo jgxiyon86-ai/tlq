@@ -50,34 +50,35 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   // ─────────────────────────────────────────────
   // LOAD today entry (3-priority search)
   // ─────────────────────────────────────────────
-  Future<void> _loadTodayEntry() async {
+  Future<void> _loadTodayEntry({bool background = false}) async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    if (!background) setState(() => _isLoading = true);
+    
     try {
-      // 1. First check if it's already in the widget data (from dashboard sync)
-      if (widget.challenge['today_entry'] != null) {
+      // 1. If we already have widget data from dashboard, use it first to avoid empty screen
+      if (_todayEntry == null && widget.challenge['today_entry'] != null) {
         setState(() {
           _todayEntry = Map<String, dynamic>.from(widget.challenge['today_entry'] as Map);
-          _isLoading = false;
+          if (!background) _isLoading = false;
         });
-        // We still fetch history in background to refresh
       }
 
       final history = await ApiService.getChallengeHistory(widget.challenge['id']);
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final currentDayChallenge = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
       
       Map<String, dynamic>? found;
 
-      // Priority 1: Specifically check for an entry with today's date
+      // Priority 1: Match specifically the current_day of the challenge (Most Reliable)
       for (var e in history) {
         final m = Map<String, dynamic>.from(e as Map);
-        if (m['entry_date']?.toString().startsWith(todayStr) == true) {
+        if (int.tryParse(m['day_number']?.toString() ?? '0') == currentDayChallenge) {
           found = m;
           break;
         }
       }
 
-      // Priority 2: Any entry that is NOT completed (the current active task)
+      // Priority 2: Any entry that is NOT completed
       if (found == null) {
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
@@ -89,12 +90,11 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         }
       }
 
-      // Priority 3: Search by current_day number
+      // Priority 3: Fallback check by date
       if (found == null) {
-        final day = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
-          if (int.tryParse(m['day_number']?.toString() ?? '0') == day) {
+          if (m['entry_date']?.toString().startsWith(todayStr) == true) {
             found = m;
             break;
           }
@@ -103,7 +103,11 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
       if (mounted) {
         setState(() {
-          _todayEntry = found;
+          // IMPORTANT: Only update if found is not null OR if we really have no data
+          // This prevents reverting to the roll screen if background refresh fails
+          if (found != null) {
+            _todayEntry = found;
+          }
           _isLoading = false;
         });
       }
@@ -162,7 +166,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
       }
     } finally {
-      await _loadTodayEntry();
+      await _loadTodayEntry(background: true);
     }
   }
 

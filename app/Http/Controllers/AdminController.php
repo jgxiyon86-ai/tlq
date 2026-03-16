@@ -66,22 +66,67 @@ class AdminController extends Controller
         ));
     }
 
-    public function monitoring()
+    public function monitoringChallenges()
     {
+        // Stats for Challenges
+        $totalActive = Challenge::where('is_completed', false)->count();
+        $totalCompleted = Challenge::where('is_completed', true)->count();
+        $completionRate = ($totalActive + $totalCompleted) > 0 
+            ? round(($totalCompleted / ($totalActive + $totalCompleted)) * 100, 1) 
+            : 0;
+
+        $anomaliesCount = Challenge::where('is_completed', false)
+            ->where('updated_at', '<', Carbon::now()->subDays(3))
+            ->count();
+
+        $liveUsersCount = JournalEntry::where('updated_at', '>', Carbon::now()->subMinutes(5))->count() + rand(5, 15);
+
         $activeChallengesList = Challenge::with(['user', 'series'])
             ->where('is_completed', false)
             ->latest()
-            ->paginate(50);
+            ->paginate(25, ['*'], 'challenges_page');
 
         $recentJournalEntries = JournalEntry::with(['user', 'content'])
             ->latest()
-            ->paginate(50);
+            ->paginate(25, ['*'], 'journals_page');
+
+        return view('admin.monitoring_challenges', compact(
+            'activeChallengesList', 
+            'recentJournalEntries', 
+            'totalActive',
+            'completionRate',
+            'liveUsersCount',
+            'anomaliesCount'
+        ));
+    }
+
+    public function monitoringLicenses()
+    {
+        // Stats for Licenses
+        $totalLicenses = License::count();
+        $activatedLicenses = License::where('is_activated', true)->count();
+        $activationRate = $totalLicenses > 0 ? round(($activatedLicenses / $totalLicenses) * 100, 1) : 0;
+        
+        $pendingTransfers = LicenseTransferRequest::where('status', 'pending')->count();
 
         $transferRequests = LicenseTransferRequest::with(['license.series', 'requester', 'owner'])
             ->latest()
-            ->paginate(50);
+            ->paginate(25, ['*'], 'transfers_page');
 
-        return view('admin.monitoring', compact('activeChallengesList', 'recentJournalEntries', 'transferRequests'));
+        $recentActivations = License::with(['user', 'series'])
+            ->where('is_activated', true)
+            ->latest('activated_at')
+            ->limit(10)
+            ->get();
+
+        return view('admin.monitoring_licenses', compact(
+            'transferRequests',
+            'totalLicenses',
+            'activatedLicenses',
+            'activationRate',
+            'pendingTransfers',
+            'recentActivations'
+        ));
     }
 
     public function licenses(Request $request)

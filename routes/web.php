@@ -18,7 +18,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring');
+    Route::get('/monitoring/challenges', [AdminController::class, 'monitoringChallenges'])->name('monitoring.challenges');
+    Route::get('/monitoring/licenses', [AdminController::class, 'monitoringLicenses'])->name('monitoring.licenses');
     Route::get('/licenses', [AdminController::class, 'licenses'])->name('licenses');
     Route::post('/licenses/generate', [AdminController::class, 'generateLicenses'])->name('licenses.generate');
     Route::get('/licenses/print/{id}', [AdminController::class, 'printLicense'])->name('licenses.print');

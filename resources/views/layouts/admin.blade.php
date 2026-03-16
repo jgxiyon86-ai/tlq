@@ -40,12 +40,25 @@
                 <h1 class="text-xl font-bold tracking-tight">TLQ Jar <span class="text-amber-400 font-light text-sm italic">Admin</span></h1>
             </div>
             <div class="flex items-center space-x-6">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-400 transition">Dashboard</a>
-                <a href="{{ route('admin.monitoring') }}" class="hover:text-amber-400 transition flex items-center">
-                    Monitoring 
-                    <span class="ml-2 w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
-                </a>
-                <a href="{{ route('admin.licenses') }}" class="hover:text-amber-400 transition">Licenses</a>
+                <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.dashboard') ? 'text-amber-400' : '' }}">Dashboard</a>
+                
+                <!-- Monitoring Dropdown Submenu -->
+                <div class="relative group">
+                    <button class="hover:text-amber-400 transition flex items-center space-x-1 {{ request()->routeIs('admin.monitoring.*') ? 'text-amber-400' : '' }}">
+                        <span>Monitoring</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 hidden group-hover:block animate-fade-in">
+                        <a href="{{ route('admin.monitoring.challenges') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition">
+                            📊 Monitor Tantangan
+                        </a>
+                        <a href="{{ route('admin.monitoring.licenses') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition">
+                            🔑 Monitor License
+                        </a>
+                    </div>
+                </div>
+
+                <a href="{{ route('admin.licenses') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.licenses') ? 'text-amber-400' : '' }}">Licenses</a>
                 <a href="{{ route('admin.contents.index') }}" class="hover:text-amber-400 transition">Contents</a>
                 <a href="{{ route('admin.manual-pages.index') }}" class="hover:text-amber-400 transition">Guides</a>
                 <a href="{{ route('admin.users.index') }}" class="hover:text-amber-400 transition">Users</a>
