@@ -293,7 +293,8 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: LinearProgressIndicator(
-                                  value: currentDay / totalDays,
+                                  // Guard against division by zero
+                                  value: totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0,
                                   backgroundColor: Colors.white24,
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(AppColors.goldIslamic),
