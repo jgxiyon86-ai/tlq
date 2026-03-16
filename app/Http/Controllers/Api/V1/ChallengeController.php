@@ -76,14 +76,21 @@ class ChallengeController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        
+        // Eager load everything needed for the dashboard in ONE go
         $challenges = Challenge::where('user_id', $user->id)
-            ->with('series')
+            ->with(['series', 'journalEntries.content'])
             ->get()
             ->map(function ($c) use ($user) {
-                $entry = $c->today_entry;
+                // Since we eager loaded journalEntries, this will find it in the collection 
+                // without hitting the database again if we use collection methods
+                $day = $c->current_day;
+                $entry = $c->journalEntries->firstWhere('day_number', $day);
+                
                 $c->today_entry = $entry;
                 
                 // Check if user has an activated license for this series
+                // If you have millions of rows, we might want to eager load licenses too
                 $c->has_license = License::where('activated_by', $user->id)
                     ->where('series_id', $c->series_id)
                     ->where('is_activated', true)

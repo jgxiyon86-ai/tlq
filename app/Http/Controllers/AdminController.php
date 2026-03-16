@@ -32,7 +32,9 @@ class AdminController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $chartUserLabels[] = $date->format('d M');
-            $chartUserData[] = User::whereDate('created_at', $date->format('Y-m-d'))->count();
+            $start = $date->copy()->startOfDay();
+            $end = $date->copy()->endOfDay();
+            $chartUserData[] = User::whereBetween('created_at', [$start, $end])->count();
         }
 
         // Chart Data Aktivitas Jurnal (7 hari terakhir)
@@ -41,7 +43,9 @@ class AdminController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $chartActLabels[] = $date->format('d M');
-            $chartActData[] = JournalEntry::whereDate('created_at', $date->format('Y-m-d'))->count();
+            $start = $date->copy()->startOfDay();
+            $end = $date->copy()->endOfDay();
+            $chartActData[] = JournalEntry::whereBetween('created_at', [$start, $end])->count();
         }
 
         // Data Detil untuk Tabel
