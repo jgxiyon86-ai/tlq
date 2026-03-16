@@ -226,15 +226,16 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final challenge = widget.challenge;
-    final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
-    final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
-    final seriesName = challenge['series']?['name'] ?? 'TLQ';
-    final hasBefore = _todayEntry?['before_pesan'] != null;
-    final hasAfter = _todayEntry?['after_berhasil'] != null;
-    final hasEntry = _todayEntry != null;
+    try {
+      final challenge = widget.challenge;
+      final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
+      final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
+      final seriesName = challenge['series']?['name']?.toString() ?? 'TLQ';
+      final hasBefore = _todayEntry?['before_pesan'] != null;
+      final hasAfter = _todayEntry?['after_berhasil'] != null;
+      final hasEntry = _todayEntry != null;
 
-    return Scaffold(
+      return Scaffold(
       backgroundColor: const Color(0xFFF6F5F0),
       body: CustomScrollView(
         slivers: [
@@ -530,6 +531,17 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         ],
       ),
     );
+    } catch (e, st) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error UI')),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Text('Debug Error: $e\n\n$st', style: const TextStyle(color: Colors.red)),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildActivationWarning() {
