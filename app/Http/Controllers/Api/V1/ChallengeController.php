@@ -108,7 +108,7 @@ class ChallengeController extends Controller
 
         // Check: User must have an ACTIVATED license for this series
         $license = License::where('activated_by', $request->user()->id)
-            ->where('series_id', $challenge->series_id)
+            ->where('series_id', (string)$challenge->series_id) // Cast to string to be safe
             ->where('is_activated', true)
             ->first();
 

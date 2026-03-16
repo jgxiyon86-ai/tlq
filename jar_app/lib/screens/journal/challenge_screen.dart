@@ -51,36 +51,36 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   // LOAD today entry (3-priority search)
   // ─────────────────────────────────────────────
   Future<void> _loadTodayEntry() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final history = await ApiService.getChallengeHistory(widget.challenge['id']);
-
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      
       Map<String, dynamic>? found;
 
-      // Priority 1: incomplete entry that already has content rolled
+      // Priority 1: Any entry that is NOT completed (needs before/after)
       for (var e in history) {
         final m = Map<String, dynamic>.from(e as Map);
-        final isCompleted = m['is_completed'];
-        final hasContent = m['content'] != null;
-        if (hasContent && isCompleted != true && isCompleted != 1) {
+        final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
+        if (!isCompleted) {
           found = m;
           break;
         }
       }
 
-      // Priority 2: today by date
+      // Priority 2: specifically today's entry by date
       if (found == null) {
-        final today = DateTime.now().toIso8601String().substring(0, 10);
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
-          if (m['entry_date']?.toString().startsWith(today) == true) {
+          if (m['entry_date']?.toString().startsWith(todayStr) == true) {
             found = m;
             break;
           }
         }
       }
 
-      // Priority 3: by current_day number
+      // Priority 3: Fallback by day_number
       if (found == null) {
         final day = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
         for (var e in history) {
@@ -92,8 +92,13 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         }
       }
 
-      if (mounted) setState(() { _todayEntry = found; _isLoading = false; });
-    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _todayEntry = found;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
   }
