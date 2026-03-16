@@ -79,7 +79,9 @@ class AdminController extends Controller
             ->where('updated_at', '<', Carbon::now()->subDays(3))
             ->count();
 
-        $liveUsersCount = JournalEntry::where('updated_at', '>', Carbon::now()->subMinutes(5))->count() + rand(5, 15);
+        $liveUsersCount = JournalEntry::where('updated_at', '>', Carbon::now()->subMinutes(5))
+            ->distinct('user_id')
+            ->count();
 
         $activeChallengesList = Challenge::with(['user', 'series'])
             ->where('is_completed', false)

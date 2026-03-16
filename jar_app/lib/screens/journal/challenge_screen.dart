@@ -367,6 +367,36 @@ class _ChallengeScreenState extends State<ChallengeScreen>
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
 
+                  // ══ CATCH UP ALERT (Always visible if debt exists) ══
+                  if (_debtDays > 0 && !_isCatchUpMode)
+                    FadeInDown(
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.amber.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            const Text('⚡', style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Ada $_debtDays hari tertinggal.',
+                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => setState(() => _isCatchUpMode = true),
+                              child: const Text('KEJAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.amber, fontSize: 10)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
                   // ══ STATE 1: Belum kocok hari ini ══
                   if (!hasEntry && !_isRevealing)
                     _buildGreetingAndKocok(seriesName, currentDay),
@@ -411,34 +441,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
                     if (hasAfter) ...[
                       const SizedBox(height: 24),
-                      if (_debtDays > 0 && !_isCatchUpMode)
-                        FadeInUp(
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade50,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.amber.shade200),
-                            ),
-                            child: Row(
-                              children: [
-                                const Text('⚡', style: TextStyle(fontSize: 20)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Anda punya ketertinggalan $_debtDays hari. Ingin mengejar sekarang?',
-                                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => setState(() => _isCatchUpMode = true),
-                                  child: const Text('KEJAR', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.amber)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       FadeInUp(
                         child: Container(
                           padding: const EdgeInsets.all(20),

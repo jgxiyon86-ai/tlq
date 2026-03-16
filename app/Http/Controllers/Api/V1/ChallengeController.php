@@ -9,6 +9,7 @@ use App\Models\JournalEntry;
 use App\Models\License;
 use App\Models\Series;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ChallengeController extends Controller
 {
@@ -159,16 +160,21 @@ class ChallengeController extends Controller
                     ->where('is_catch_up', false)
                     ->first();
 
+                $startedAt = $lastEntry->challenge->started_at ?? $lastEntry->challenge->created_at;
+                $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
+                $debt = max(0, $targetDay - $lastEntry->challenge->current_day);
+
                 return response()->json([
                     'message' => 'Alhamdulillah, jatah Istiqomah hari ini sudah diambil. Silahkan kembali besok, atau gunakan menu "Kejar Ketertinggalan" jika ada.',
                     'entry' => $lastEntry->load('content.series'),
+                    'challenge' => $lastEntry->challenge->fresh()->setAttribute('debt_days', $debt),
                     'already_done_today' => true
                 ], 200);
             }
         } else {
             // Validate if catch-up is allowed (must have debt)
             $startedAt = $challenge->started_at ?? $challenge->created_at;
-            $targetDay = now()->diffInDays($startedAt) + 1;
+            $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
             $debt = max(0, $targetDay - $challenge->current_day);
 
             if ($debt <= 0) {
@@ -198,9 +204,15 @@ class ChallengeController extends Controller
             'is_catch_up' => $isCatchUp,
         ]);
 
+        // Calculate debt for fresh challenge object
+        $startedAt = $challenge->started_at ?? $challenge->created_at;
+        $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
+        $debt = max(0, $targetDay - ($challenge->current_day + 0));
+
         return response()->json([
             'message' => 'Ayat hari ini siap! Bismillah, selamat menghidupkan Al-Quran.',
             'entry' => $entry->load('content.series'),
+            'challenge' => $challenge->fresh()->setAttribute('debt_days', $debt),
         ], 201);
     }
 
@@ -225,9 +237,15 @@ class ChallengeController extends Controller
             'before_action'   => $request->before_action,
         ]);
 
+        $challenge = $entry->challenge;
+        $startedAt = $challenge->started_at ?? $challenge->created_at;
+        $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
+        $debt = max(0, $targetDay - $challenge->current_day);
+
         return response()->json([
-            'message' => 'Catatan Pagi (Before) berhasil disimpan!',
-            'entry' => $entry->load('content'),
+            'message' => 'Catatan pagi tersimpan 😊',
+            'entry'   => $entry->load('content'),
+            'challenge' => $challenge->fresh()->setAttribute('debt_days', $debt),
         ]);
     }
 
@@ -275,10 +293,15 @@ class ChallengeController extends Controller
             $challenge->update(['is_completed' => true]);
         }
 
+        // Calculate debt for response
+        $startedAt = $challenge->started_at ?? $challenge->created_at;
+        $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
+        $debt = max(0, $targetDay - $challenge->current_day);
+
         return response()->json([
             'message' => 'Catatan Sore (After) tersimpan! MasyaAllah, satu hari lagi terlampauhi!',
             'entry'   => $entry->load('content'),
-            'challenge' => $challenge->fresh(),
+            'challenge' => $challenge->fresh()->setAttribute('debt_days', $debt),
         ]);
     }
 
