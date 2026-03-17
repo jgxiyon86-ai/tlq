@@ -112,8 +112,9 @@ class ChallengeController extends Controller
             ->get();
 
         foreach ($challenges as $c) {
+            $this->ensureJournalEntriesExist($c);
+            
             // Find entry for TODAY based on calendar date
-            // We search for an entry that matches TODAY's date on the server
             $today = now()->toDateString();
             $entry = $c->journalEntries->firstWhere('entry_date', $today);
             
@@ -320,6 +321,8 @@ class ChallengeController extends Controller
             return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
+        $this->ensureJournalEntriesExist($challenge);
+
         $entries = $challenge->journalEntries()
             ->with('content')
             ->orderByDesc('id') // Always newest first
@@ -340,7 +343,7 @@ class ChallengeController extends Controller
         return response()->json([
             'entries' => $entries,
             'today_entry' => $todayEntry,
-            'challenge' => $challenge->setAttribute('debt_days', $this->getDebtDays($challenge))
+            'challenge' => $challenge->load('series')->setAttribute('debt_days', $this->getDebtDays($challenge))
         ]);
     }
 
@@ -390,5 +393,30 @@ class ChallengeController extends Controller
         return response()->json([
             'message' => 'Tantangan telah dihapus.'
         ]);
+    }
+
+    private function ensureJournalEntriesExist(Challenge $c)
+    {
+        // Check if all 1..total_days exist. If not, create them.
+        $total = (int)$c->total_days;
+        $existingCount = $c->journalEntries->count();
+        
+        if ($existingCount < $total) {
+            $startedAt = $c->started_at ?? $c->created_at;
+            for ($i = 1; $i <= $total; $i++) {
+                $exists = $c->journalEntries->contains('day_number', $i);
+                if (!$exists) {
+                    JournalEntry::create([
+                        'user_id' => $c->user_id,
+                        'challenge_id' => $c->id,
+                        'day_number' => $i,
+                        'entry_date' => $startedAt->copy()->addDays($i-1)->toDateString(),
+                    ]);
+                }
+            }
+            // Refresh relationship after creation
+            $c->unsetRelation('journalEntries');
+            $c->load('journalEntries.content');
+        }
     }
 }
