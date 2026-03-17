@@ -116,31 +116,31 @@
                 <div class="flex items-center justify-between p-5 bg-gray-50/50 rounded-3xl hover:bg-white border border-transparent hover:border-emerald-100 transition shadow-sm hover:shadow-md group">
                     <div class="flex items-center">
                         <div class="relative">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:rotate-6 transition-transform" style="background-color: {{ $c->series->color_hex ?? '#064E3B' }}">
-                                {{ strtoupper(substr($c->series->name, 0, 1)) }}
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:rotate-6 transition-transform" style="background-color: {{ optional($c->series)->color_hex ?? '#064E3B' }}">
+                                {{ strtoupper(substr(optional($c->series)->name ?? '?', 0, 1)) }}
                             </div>
                             <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
                                 <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <p class="font-black text-gray-800 text-sm">{{ $c->user->name }}</p>
+                            <p class="font-black text-gray-800 text-sm">{{ optional($c->user)->name ?? 'User Tidak Dikenal' }}</p>
                             <p class="text-[10px] font-bold text-gray-400 flex items-center space-x-2">
                                 <span class="flex items-center">
                                     <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                    {{ $c->series->name }}
+                                    {{ optional($c->series)->name ?? 'Seri Tidak Ada' }}
                                 </span>
                                 <span class="opacity-30">|</span>
                                 <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-black tracking-tighter">{{ $c->total_days }} HARI</span>
                                 <span class="opacity-30">|</span>
-                                <span class="text-emerald-500/70">{{ $c->user->email }}</span>
+                                <span class="text-emerald-500/70">{{ optional($c->user)->email ?? '-' }}</span>
                             </p>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
                         <div class="text-right">
                             <p class="text-sm font-black text-emerald-600 tracking-tighter">HARI KE-{{ $c->current_day }}</p>
-                            <p class="text-[10px] font-bold text-gray-400 italic">Mulai {{ $c->started_at ? $c->started_at->translatedFormat('d M') : $c->created_at->translatedFormat('d M') }}</p>
+                            <p class="text-[10px] font-bold text-gray-400 italic">Mulai {{ $c->started_at ? $c->started_at->translatedFormat('d M') : ($c->created_at ? $c->created_at->translatedFormat('d M') : '-') }}</p>
                         </div>
                         
                         <form action="{{ route('admin.monitoring.challenges.destroy', $c->id) }}" method="POST" onsubmit="return confirm('Hapus paksa tantangan ini?')">
