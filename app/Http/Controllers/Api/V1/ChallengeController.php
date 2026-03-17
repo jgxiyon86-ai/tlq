@@ -41,17 +41,16 @@ class ChallengeController extends Controller
             ], 403); 
         }
 
-        // Check if a challenge of this specific type already exists and is not completed
+        // Check if ANY challenge for this series is still walking (active)
         $challenge = Challenge::where('user_id', $user->id)
             ->where('series_id', $request->series_id)
-            ->where('is_seven_days', $isSevenDays)
             ->where('is_completed', false)
             ->first();
 
         if ($challenge) {
-            $daysLabel = $isSevenDays ? '7' : '40';
+            $daysLabel = $challenge->is_seven_days ? '7' : '40';
             return response()->json([
-                'message' => "Tantangan {$daysLabel} hari untuk seri ini masih berjalan!",
+                'message' => "Tantangan {$daysLabel} hari untuk seri ini masih berjalan! Selesaikan atau hapus tantangan aktif sebelum memulai yang baru.",
                 'challenge' => $challenge->load('series'),
             ], 200);
         }
