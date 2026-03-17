@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.tlq.jar_app"
-    compileSdk = 36
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

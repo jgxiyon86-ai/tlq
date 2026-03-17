@@ -1,8 +1,9 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'dart:io';
 
 
@@ -11,8 +12,16 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    tz.initializeTimeZones();
+    tz_data.initializeTimeZones();
     
+    // DETECT AND SET LOCATION (Crucial for fixed scheduling)
+    try {
+      final String currentTimeZone = (await FlutterTimezone.getLocalTimezone()).identifier;
+      tz.setLocalLocation(tz.getLocation(currentTimeZone));
+    } catch (e) {
+      // Fallback to UTC if detection fails, though usually tz.local handles it
+    }
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -32,12 +41,13 @@ class NotificationService {
       // 1. Basic Notification Permission
       await Permission.notification.request();
       
-      // 2. Exact Alarm Permission (Required for punctuality on Android 12+)
+      // 2. Exact Alarm Permission
       if (await Permission.scheduleExactAlarm.isDenied) {
         await Permission.scheduleExactAlarm.request();
       }
     }
   }
+
 
 
   static Future<void> testInstantNotification() async {

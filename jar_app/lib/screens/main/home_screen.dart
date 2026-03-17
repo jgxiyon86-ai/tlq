@@ -512,7 +512,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              if (currentDay == 1) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+                  onPressed: () {
+                    final id = challenge['id'];
+                    if (id != null) {
+                      _showDeleteConfirm(int.parse(id.toString()));
+                    }
+                  },
+                ),
+              ],
+              const SizedBox(width: 4),
               Icon(Icons.chevron_right_rounded, color: Colors.grey.shade300),
             ],
           ),
@@ -522,6 +534,33 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       return const SizedBox.shrink();
     }
+  }
+
+  void _showDeleteConfirm(int id) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Hapus Tantangan?', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin menghapus tantangan ini? Data progres akan hilang. Fitur ini hanya tersedia di Hari ke-1.',
+            style: GoogleFonts.inter()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await ApiService.deleteChallenge(id);
+                _loadAll();
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+              }
+            },
+            child: const Text('Ya, Hapus', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showActivateChallengeDialog() {

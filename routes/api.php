@@ -41,6 +41,7 @@ Route::group(['prefix' => 'v1'], function () {
         // Challenge & Journal
         Route::get('/challenges', [ChallengeController::class, 'index']);
         Route::post('/challenges/activate', [ChallengeController::class, 'activate']);
+        Route::delete('/challenges/{challenge}', [ChallengeController::class, 'destroy']);
         Route::post('/challenges/{challenge}/roll', [ChallengeController::class, 'rollContent']);
         Route::get('/challenges/{challenge}/history', [ChallengeController::class, 'history']);
         Route::post('/journal/{entry}/before', [ChallengeController::class, 'saveBefore']);

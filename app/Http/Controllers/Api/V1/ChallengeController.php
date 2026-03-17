@@ -41,15 +41,17 @@ class ChallengeController extends Controller
             ], 403); 
         }
 
-        // Check if challenge already exists
+        // Check if a challenge of this specific type already exists and is not completed
         $challenge = Challenge::where('user_id', $user->id)
             ->where('series_id', $request->series_id)
+            ->where('is_seven_days', $isSevenDays)
+            ->where('is_completed', false)
             ->first();
 
         if ($challenge) {
-            $daysLabel = $challenge->is_seven_days ? '7' : '40';
+            $daysLabel = $isSevenDays ? '7' : '40';
             return response()->json([
-                'message' => "Tantangan {$daysLabel} hari untuk seri ini sudah aktif!",
+                'message' => "Tantangan {$daysLabel} hari untuk seri ini masih berjalan!",
                 'challenge' => $challenge->load('series'),
             ], 200);
         }
@@ -367,6 +369,28 @@ class ChallengeController extends Controller
         return response()->json([
             'message' => 'MasyaAllah! Catatan perubahanmu telah disimpan. Teruslah menghidupkan Al-Quran!',
             'challenge' => $challenge->fresh(),
+        ]);
+    }
+
+    /**
+     * Delete a challenge (only allowed if still on Day 1).
+     */
+    public function destroy(Request $request, Challenge $challenge)
+    {
+        if ($challenge->user_id != $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized Access'], 403);
+        }
+
+        if ($challenge->current_day > 1) {
+            return response()->json([
+                'message' => 'Tantangan sudah berjalan lebih dari 1 hari dan tidak bisa dihapus.'
+            ], 403);
+        }
+
+        $challenge->delete();
+
+        return response()->json([
+            'message' => 'Tantangan telah dihapus.'
         ]);
     }
 }

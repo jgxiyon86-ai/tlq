@@ -66,9 +66,11 @@ class AdminController extends Controller
         ));
     }
 
-    public function monitoringChallenges()
+    public function monitoringChallenges(Request $request)
     {
-        // Stats for Challenges
+        $searchQuery = $request->input('q');
+
+        // Stats for Challenges - Global (Cached or Fast Count)
         $totalActive = Challenge::where('is_completed', false)->count();
         $totalCompleted = Challenge::where('is_completed', true)->count();
         $completionRate = ($totalActive + $totalCompleted) > 0 
@@ -83,14 +85,36 @@ class AdminController extends Controller
             ->distinct('user_id')
             ->count();
 
-        $activeChallengesList = Challenge::with(['user', 'series'])
-            ->where('is_completed', false)
-            ->latest()
-            ->paginate(25, ['*'], 'challenges_page');
+        // 1. Data Jemaah Aktif (Challenges) with Filter
+        $activeChallengesQuery = Challenge::with(['user', 'series'])
+            ->where('is_completed', false);
 
-        $recentJournalEntries = JournalEntry::with(['user', 'content'])
-            ->latest()
-            ->paginate(25, ['*'], 'journals_page');
+        if ($searchQuery) {
+            $activeChallengesQuery->whereHas('user', function($q) use ($searchQuery) {
+                $q->where('name', 'like', "%{$searchQuery}%")
+                  ->orWhere('email', 'like', "%{$searchQuery}%");
+            });
+        }
+
+        $activeChallengesList = $activeChallengesQuery->latest()
+            ->paginate(15, ['*'], 'challenges_page')
+            ->appends(['q' => $searchQuery]);
+
+        // 2. Riwayat Perubahan (Journal Entries) with Filter
+        $journalsQuery = JournalEntry::with(['user', 'content']);
+
+        if ($searchQuery) {
+            $journalsQuery->whereHas('user', function($q) use ($searchQuery) {
+                $q->where('name', 'like', "%{$searchQuery}%");
+            })->orWhereHas('content', function($q) use ($searchQuery) {
+                $q->where('surah_ayah', 'like', "%{$searchQuery}%")
+                  ->orWhere('content_text', 'like', "%{$searchQuery}%");
+            });
+        }
+
+        $recentJournalEntries = $journalsQuery->latest()
+            ->paginate(15, ['*'], 'journals_page')
+            ->appends(['q' => $searchQuery]);
 
         return view('admin.monitoring_challenges', compact(
             'activeChallengesList', 
@@ -98,7 +122,8 @@ class AdminController extends Controller
             'totalActive',
             'completionRate',
             'liveUsersCount',
-            'anomaliesCount'
+            'anomaliesCount',
+            'searchQuery'
         ));
     }
 

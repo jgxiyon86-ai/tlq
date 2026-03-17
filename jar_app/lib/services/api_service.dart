@@ -281,9 +281,24 @@ class ApiService {
   static Future<Map<String, dynamic>> activateChallenge(int seriesId, {bool confirmed = false, bool isSevenDays = false}) async {
     return _authenticatedPost('$baseUrl/challenges/activate', {
       'series_id': seriesId.toString(),
+      'is_seven_days': isSevenDays ? '1' : '0',
       if (confirmed) 'confirmed': '1',
-      if (isSevenDays) 'is_seven_days': '1',
     });
+  }
+
+  static Future<Map<String, dynamic>> deleteChallenge(int challengeId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/challenges/$challengeId'),
+      headers: {
+        'Authorization': 'Bearer ${await _getToken()}',
+        'Accept': 'application/json',
+      },
+    );
+    final data = json.decode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return data;
+    }
+    throw Exception(data['message'] ?? 'Gagal menghapus tantangan');
   }
 
   static Future<Map<String, dynamic>> rollContent(int challengeId, int seriesId, {bool isCatchUp = false}) async {
