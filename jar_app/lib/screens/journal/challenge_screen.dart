@@ -59,41 +59,41 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     if (!mounted) return;
     if (!background) setState(() => _isLoading = true);
     
+    // 1. Initial local load to avoid flicker
+    if (_todayEntry == null && widget.challenge['today_entry'] != null) {
+      _todayEntry = Map<String, dynamic>.from(widget.challenge['today_entry'] as Map);
+    }
+    
     try {
-      // 1. If we already have widget data from dashboard, use it first to avoid empty screen
-      if (_todayEntry == null && widget.challenge['today_entry'] != null) {
-        setState(() {
-          _todayEntry = Map<String, dynamic>.from(widget.challenge['today_entry'] as Map);
-          if (!background) _isLoading = false;
-        });
-      }
+      final responseData = await ApiService.getChallengeHistory(widget.challenge['id']);
+      final List<dynamic> history = (responseData['entries'] as List?) ?? [];
+      final Map<String, dynamic>? challengeData = responseData['challenge'] as Map<String, dynamic>?;
 
-      final history = await ApiService.getChallengeHistory(widget.challenge['id']);
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      int currentDayChallenge = challengeData != null 
+          ? (int.tryParse(challengeData['current_day'].toString()) ?? 1)
+          : (int.tryParse(widget.challenge['current_day'].toString()) ?? 1);
       
-      // Get the freshest current_day from the widget, but we'll also check history
-      int currentDayChallenge = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
-      
+      String todayStr = DateTime.now().toIso8601String().substring(0, 10);
+
       Map<String, dynamic>? found;
-
-      // Priority 1: Match specifically the current_day of the challenge (Most Reliable)
+      // Priority 1: Match specifically the current_day (INCOMPLETE)
       for (var e in history) {
         final m = Map<String, dynamic>.from(e as Map);
-        if (int.tryParse(m['day_number']?.toString() ?? '0') == currentDayChallenge) {
-          found = m;
-          break;
-        }
-      }
-
-      // Priority 2: Any entry that is NOT completed (The "Stuck" entry)
-      if (found == null) {
-        for (var e in history) {
-          final m = Map<String, dynamic>.from(e as Map);
+        if (m['day_number'] == currentDayChallenge) {
           final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
           if (!isCompleted) {
             found = m;
-            // Also update our local currentDayChallenge to match this found entry
-            currentDayChallenge = int.tryParse(m['day_number']?.toString() ?? '1') ?? 1;
+            break;
+          }
+        }
+      }
+
+      // Priority 2: Match specifically the current_day (COMPLETED)
+      if (found == null) {
+        for (var e in history) {
+          final m = Map<String, dynamic>.from(e as Map);
+          if (m['day_number'] == currentDayChallenge) {
+            found = m;
             break;
           }
         }
@@ -114,8 +114,12 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       if (mounted) {
         setState(() {
           _todayEntry = found;
-          _currentDay = currentDayChallenge; // Sync day number
-          _debtDays = int.tryParse(widget.challenge['debt_days']?.toString() ?? '0') ?? 0;
+          _currentDay = currentDayChallenge;
+          if (challengeData != null) {
+             _debtDays = int.tryParse(challengeData['debt_days']?.toString() ?? '0') ?? 0;
+          } else {
+             _debtDays = int.tryParse(widget.challenge['debt_days']?.toString() ?? '0') ?? 0;
+          }
           _isLoading = false;
         });
       }
@@ -159,15 +163,39 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   }
 
   Future<void> _doRoll() async {
+    final bool catchUp = _isCatchUpMode;
     try {
-      final result = await ApiService.rollContent(widget.challenge['id'], isCatchUp: _isCatchUpMode);
-      if (mounted && result['entry'] != null) {
+      final seriesId = int.tryParse(widget.challenge['series_id']?.toString() ?? '0') ?? 0;
+      final res = await ApiService.rollContent(widget.challenge['id'], seriesId, isCatchUp: catchUp);
+      
+      if (res['error'] == true) {
+         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+         setState(() { _isRevealing = false; _isShaking = false; });
+         return;
+      }
+
+      if (mounted) {
         setState(() {
-          _todayEntry = Map<String, dynamic>.from(result['entry'] as Map);
+          _todayEntry = res['entry'];
+          _isCatchUpMode = catchUp;
           _isRevealing = false;
-          // After a catch up roll, we don't immediately change _isCatchUpMode 
-          // but we will refresh data which updates debt
+          
+          if (res['challenge'] != null) {
+            _debtDays = int.tryParse(res['challenge']['debt_days']?.toString() ?? '0') ?? 0;
+            _currentDay = int.tryParse(res['challenge']['current_day']?.toString() ?? '1') ?? 1;
+          }
+          
+          if (res['offline'] == true) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(
+                 content: Text('Alhamdulillah, ayat pilihan untukmu telah siap'),
+                 backgroundColor: Colors.green,
+                 duration: Duration(seconds: 4),
+               )
+             );
+          }
         });
+        // _triggerConfetti(); // Assuming this method exists elsewhere or will be added
       }
     } catch (e) {
       if (mounted) {

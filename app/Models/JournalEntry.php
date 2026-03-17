@@ -16,6 +16,7 @@ class JournalEntry extends Model
         'before_perasaan',
         'before_action',
         'after_berhasil',
+        'after_perubahan',
         'after_perasaan',
         'is_completed',
         'is_catch_up',
@@ -25,6 +26,8 @@ class JournalEntry extends Model
         'user_id' => 'integer',
         'challenge_id' => 'integer',
         'entry_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'is_completed' => 'boolean',
         'is_catch_up' => 'boolean',
     ];

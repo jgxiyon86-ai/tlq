@@ -20,6 +20,8 @@ class Challenge extends Model
     protected $casts = [
         'user_id' => 'integer',
         'started_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'is_completed' => 'boolean',
         'final_reflections' => 'array',
     ];

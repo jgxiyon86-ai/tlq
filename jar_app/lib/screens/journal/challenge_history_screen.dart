@@ -24,9 +24,17 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
 
   Future<void> _loadHistory() async {
     try {
-      final entries = await ApiService.getChallengeHistory(widget.challenge['id']);
-      final currentDay = int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1;
-      final totalDays = int.tryParse(widget.challenge['total_days']?.toString() ?? '40') ?? 40;
+      final responseData = await ApiService.getChallengeHistory(widget.challenge['id']);
+      final List<dynamic> entries = (responseData['entries'] as List?) ?? [];
+      final Map<String, dynamic>? challengeData = responseData['challenge'] as Map<String, dynamic>?;
+
+      int currentDay = challengeData != null 
+          ? (int.tryParse(challengeData['current_day'].toString()) ?? 1)
+          : (int.tryParse(widget.challenge['current_day']?.toString() ?? '1') ?? 1);
+          
+      int totalDays = challengeData != null
+          ? (int.tryParse(challengeData['total_days'].toString()) ?? 40)
+          : (int.tryParse(widget.challenge['total_days']?.toString() ?? '40') ?? 40);
       
       // Map existing entries to their day_number for quick lookup
       final entryMap = <int, dynamic>{};

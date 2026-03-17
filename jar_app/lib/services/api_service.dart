@@ -286,13 +286,68 @@ class ApiService {
     });
   }
 
-  static Future<Map<String, dynamic>> rollContent(int challengeId, {bool isCatchUp = false}) async {
+  static Future<Map<String, dynamic>> rollContent(int challengeId, int seriesId, {bool isCatchUp = false}) async {
     final devId = await getDeviceId();
-    return _authenticatedPost('$baseUrl/challenges/$challengeId/roll', {
+    final Map<String, dynamic> body = {
       'device_id': devId,
       'is_catch_up': isCatchUp ? '1' : '0',
-    });
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/challenges/$challengeId/roll'),
+        headers: {
+          'Authorization': 'Bearer ${await _getToken()}',
+          'Accept': 'application/json',
+        },
+        body: body,
+      ).timeout(const Duration(seconds: 10));
+
+      final data = json.decode(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return data;
+      }
+      throw Exception(data['message'] ?? 'Roll failed');
+    } catch (e) {
+      if (e.toString().contains('SocketException') || e.toString().contains('Timeout')) {
+        // OFFLINE MODE: Pick from cache
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getString('cached_contents_$seriesId');
+        if (cached != null) {
+          final data = json.decode(cached);
+          final List<dynamic> contents = data['contents'] ?? [];
+          if (contents.isNotEmpty) {
+            // Pick a random one locally
+            final randomContent = (List.from(contents)..shuffle()).first;
+            
+            // Mark for sync with the chosen content_id
+            body['content_id'] = randomContent['id'].toString();
+            await _addToQueue('$baseUrl/challenges/$challengeId/roll', body);
+
+            return {
+              'offline': true,
+              'message': 'Ayat dipilih secara offline. Hubungkan internet nanti untuk sinkronisasi.',
+              'entry': {
+                'id': -1, // Temporary ID
+                'content': randomContent,
+                'is_completed': false,
+                'is_catch_up': isCatchUp,
+                'day_number': '?', // Will be synced by server
+              }
+            };
+          }
+        }
+        return {'error': true, 'message': 'Offline dan tidak ada cache data.'};
+      }
+      rethrow;
+    }
   }
+
+  static Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
 
   static Future<Map<String, dynamic>> saveBefore(int entryId, String pesan, String perasaan, String action) async {
     return _authenticatedPost('$baseUrl/journal/$entryId/before', {
@@ -310,7 +365,7 @@ class ApiService {
     });
   }
 
-  static Future<List<dynamic>> getChallengeHistory(int challengeId) async {
+  static Future<Map<String, dynamic>> getChallengeHistory(int challengeId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     try {
@@ -319,12 +374,10 @@ class ApiService {
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final entries = data['entries'];
-        if (entries is List) return entries;
+        return json.decode(response.body);
       }
     } catch (_) {}
-    return []; // Always return a list, never null
+    return {'entries': []}; 
   }
 
   static Future<Map<String, dynamic>> saveFinalReflections(int challengeId, Map<String, String> reflections) async {

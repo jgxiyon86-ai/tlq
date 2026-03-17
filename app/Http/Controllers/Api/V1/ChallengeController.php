@@ -81,32 +81,45 @@ class ChallengeController extends Controller
         // Eager load everything needed for the dashboard in ONE go
         $challenges = Challenge::where('user_id', $user->id)
             ->with(['series', 'journalEntries.content'])
-            ->get()
-            ->map(function ($c) use ($user) {
-                // Since we eager loaded journalEntries, this will find it in the collection 
-                // without hitting the database again if we use collection methods
-                $day = $c->current_day;
-                $entry = $c->journalEntries->firstWhere('day_number', $day);
-                
-                $c->today_entry = $entry;
-                
-                // Check if user has an activated license for this series
-                // If you have millions of rows, we might want to eager load licenses too
-                $c->has_license = License::where('activated_by', $user->id)
-                    ->where('series_id', $c->series_id)
-                    ->where('is_activated', true)
-                    ->exists();
+            ->orderBy('is_completed', 'asc')
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
-                // Calculate debt days for "Catch Up" feature
-                $startedAt = $c->started_at ?? $c->created_at;
-                $targetDay = now()->diffInDays($startedAt) + 1;
-                $c->debt_days = max(0, $targetDay - $c->current_day);
-                    
-                return $c;
-            });
+        foreach ($challenges as $c) {
+            // Since we eager loaded journalEntries, this will find it in the collection 
+            // without hitting the database again if we use collection methods
+            $day = $c->current_day;
+            $entry = $c->journalEntries->firstWhere('day_number', $day);
+            
+            $c->today_entry = $entry;
+            
+            // Check if user has an activated license for this series
+            $c->has_license = License::where('activated_by', $user->id)
+                ->where('series_id', $c->series_id)
+                ->where('is_activated', true)
+                ->exists();
+
+            $c->setAttribute('debt_days', $this->getDebtDays($c));
+        }
 
         return response()->json(['challenges' => $challenges]);
     }
+
+    private function getDebtDays(Challenge $c)
+    {
+        $startedAt = $c->started_at ?? $c->created_at;
+        if (!$startedAt) return 0;
+
+        // Use calendar days (Start of Day comparison)
+        $targetDay = $startedAt->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1;
+        
+        // If challenge is completed or final reflections are done, debt is effectively 0
+        if ($c->is_completed) return 0;
+        
+        // Debt = Target Day - current_day (what they SHOULD be on vs what they ARE on)
+        return (int) max(0, $targetDay - $c->current_day);
+    }
+
 
     /**
      * Roll (get a random ayah) for the current day's journal.
@@ -116,7 +129,11 @@ class ChallengeController extends Controller
     {
         // Use loose comparison to avoid int vs string type mismatch
         if ($challenge->user_id != $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => 'Unauthorized Access'], 403);
+        }
+
+        if ($challenge->is_completed) {
+            return response()->json(['message' => 'Tantangan ini sudah selesai! MasyaAllah.'], 422);
         }
 
         // Check: User must have an ACTIVATED license for this series
@@ -160,22 +177,16 @@ class ChallengeController extends Controller
                     ->where('is_catch_up', false)
                     ->first();
 
-                $startedAt = $lastEntry->challenge->started_at ?? $lastEntry->challenge->created_at;
-                $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
-                $debt = max(0, $targetDay - $lastEntry->challenge->current_day);
-
                 return response()->json([
                     'message' => 'Alhamdulillah, jatah Istiqomah hari ini sudah diambil. Silahkan kembali besok, atau gunakan menu "Kejar Ketertinggalan" jika ada.',
                     'entry' => $lastEntry->load('content.series'),
-                    'challenge' => $lastEntry->challenge->fresh()->setAttribute('debt_days', $debt),
+                    'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
                     'already_done_today' => true
                 ], 200);
             }
         } else {
             // Validate if catch-up is allowed (must have debt)
-            $startedAt = $challenge->started_at ?? $challenge->created_at;
-            $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
-            $debt = max(0, $targetDay - $challenge->current_day);
+            $debt = $this->getDebtDays($challenge);
 
             if ($debt <= 0) {
                 return response()->json([
@@ -184,36 +195,56 @@ class ChallengeController extends Controller
             }
         }
 
-        $day = $challenge->current_day;
+        try {
+            $day = $challenge->current_day;
 
-        // Pick a random content from this series
-        $content = Content::where('series_id', $challenge->series_id)
-            ->inRandomOrder()
-            ->first();
+            // Pick content: Preferred provided content_id (for offline sync), else random
+            if ($request->has('content_id')) {
+                $content = Content::find($request->content_id);
+                // Ensure content belongs to the right series
+                if ($content && $content->series_id != $challenge->series_id) {
+                    $content = null;
+                }
+            } else {
+                $content = Content::where('series_id', $challenge->series_id)
+                    ->inRandomOrder()
+                    ->first();
+            }
 
-        if (!$content) {
-            return response()->json(['message' => 'Tidak ada konten tersedia di seri ini.'], 404);
+            if (!$content) {
+                return response()->json(['message' => 'Konten tidak ditemukan atau tidak tersedia.'], 404);
+            }
+
+            // check if entry for this day already exists (can happen if user rolled but didn't finish)
+            $entry = JournalEntry::where('challenge_id', $challenge->id)
+                ->where('day_number', $day)
+                ->first();
+
+            if (!$entry) {
+                $entry = JournalEntry::create([
+                    'user_id'    => $request->user()->id,
+                    'challenge_id' => $challenge->id,
+                    'content_id' => $content->id,
+                    'day_number' => $day,
+                    'entry_date' => now()->toDateString(),
+                    'is_catch_up' => $isCatchUp,
+                ]);
+            } else {
+                // If exists, just update its date to today if it was caught up but not finished?
+                // Actually, let's just stick to the original entry date to avoid confusion
+            }
+
+            return response()->json([
+                'message' => 'Ayat hari ini siap! Bismillah, selamat menghidupkan Al-Quran.',
+                'entry' => $entry->load('content.series'),
+                'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal mengambil ayat: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
         }
-
-        $entry = JournalEntry::create([
-            'user_id'    => $request->user()->id,
-            'challenge_id' => $challenge->id,
-            'content_id' => $content->id,
-            'day_number' => $day,
-            'entry_date' => now()->toDateString(),
-            'is_catch_up' => $isCatchUp,
-        ]);
-
-        // Calculate debt for fresh challenge object
-        $startedAt = $challenge->started_at ?? $challenge->created_at;
-        $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
-        $debt = max(0, $targetDay - ($challenge->current_day + 0));
-
-        return response()->json([
-            'message' => 'Ayat hari ini siap! Bismillah, selamat menghidupkan Al-Quran.',
-            'entry' => $entry->load('content.series'),
-            'challenge' => $challenge->fresh()->setAttribute('debt_days', $debt),
-        ], 201);
     }
 
     /**
@@ -238,14 +269,10 @@ class ChallengeController extends Controller
         ]);
 
         $challenge = $entry->challenge;
-        $startedAt = $challenge->started_at ?? $challenge->created_at;
-        $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
-        $debt = max(0, $targetDay - $challenge->current_day);
-
         return response()->json([
             'message' => 'Catatan pagi tersimpan 😊',
             'entry'   => $entry->load('content'),
-            'challenge' => $challenge->fresh()->setAttribute('debt_days', $debt),
+            'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
         ]);
     }
 
@@ -293,15 +320,10 @@ class ChallengeController extends Controller
             $challenge->update(['is_completed' => true]);
         }
 
-        // Calculate debt for response
-        $startedAt = $challenge->started_at ?? $challenge->created_at;
-        $targetDay = Carbon::now()->diffInDays($startedAt) + 1;
-        $debt = max(0, $targetDay - $challenge->current_day);
-
         return response()->json([
             'message' => 'Catatan Sore (After) tersimpan! MasyaAllah, satu hari lagi terlampauhi!',
             'entry'   => $entry->load('content'),
-            'challenge' => $challenge->fresh()->setAttribute('debt_days', $debt),
+            'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
         ]);
     }
 
@@ -319,7 +341,10 @@ class ChallengeController extends Controller
             ->orderByDesc('id') // Always newest first
             ->get();
 
-        return response()->json(['entries' => $entries]);
+        return response()->json([
+            'entries' => $entries,
+            'challenge' => $challenge->setAttribute('debt_days', $this->getDebtDays($challenge))
+        ]);
     }
 
     /**
