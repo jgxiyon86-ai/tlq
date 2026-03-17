@@ -44,7 +44,9 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
       List<dynamic> fullHistory = [];
       for (var e in entries) {
         final m = Map<String, dynamic>.from(e as Map);
-        final entryDate = m['entry_date']?.toString() ?? '';
+        String entryDate = m['entry_date']?.toString() ?? '';
+        if (entryDate.length > 10) entryDate = entryDate.substring(0, 10);
+        
         final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
         
         if (isCompleted) {

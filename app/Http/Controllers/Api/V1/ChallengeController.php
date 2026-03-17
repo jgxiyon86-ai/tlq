@@ -116,7 +116,9 @@ class ChallengeController extends Controller
             
             // Find entry for TODAY based on calendar date
             $today = now()->toDateString();
-            $entry = $c->journalEntries->firstWhere('entry_date', $today);
+            $entry = $c->journalEntries->first(function($e) use ($today) {
+                return \Carbon\Carbon::parse($e->entry_date)->toDateString() === $today;
+            });
             
             // Fallback: If no entry matches today's exact date string (timezone shift),
             // and the challenge is active, try to find the entry that SHOULD be today
@@ -147,7 +149,7 @@ class ChallengeController extends Controller
             $c->setAttribute('debt_days', $this->getDebtDays($c));
             
             // Calculate how many entries were actually filled
-            $c->setAttribute('completed_entries_count', $c->journalEntries()->where('is_completed', true)->count());
+            $c->setAttribute('completed_entries_count', $c->journalEntries->where('is_completed', true)->count());
         }
 
         return response()->json(['challenges' => $challenges]);
@@ -330,7 +332,9 @@ class ChallengeController extends Controller
 
         // Detect Today's Entry for the APK (Timezone resilient)
         $today = now()->toDateString();
-        $todayEntry = $entries->firstWhere('entry_date', $today);
+        $todayEntry = $entries->first(function($e) use ($today) {
+            return \Carbon\Carbon::parse($e->entry_date)->toDateString() === $today;
+        });
         
         if (!$todayEntry && !$challenge->is_completed) {
             $startedAt = $challenge->started_at ?? $challenge->created_at;

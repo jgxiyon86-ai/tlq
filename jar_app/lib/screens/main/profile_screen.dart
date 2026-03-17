@@ -621,7 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text('The Living Quran © 2025',
                       style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 12)),
                   const SizedBox(height: 4),
-                  Text('Versi 1.0.0',
+                  Text('Versi 1.1.0',
                       style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 11, fontWeight: FontWeight.bold)),
                 ],
               ),
