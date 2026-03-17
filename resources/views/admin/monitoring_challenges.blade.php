@@ -7,8 +7,8 @@
             <svg class="w-24 h-24 text-emerald-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20ZM12,6a6,6,0,1,0,6,6A6,6,0,0,0,12,6Zm0,10a4,4,0,1,1,4-4A4,4,0,0,1,12,16Z"/></svg>
         </div>
         <div class="relative z-10">
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Monitor <span class="text-emerald-600">Jemaah</span></h2>
-            <p class="text-gray-500 text-sm mt-1">Pengawasan khidmah aktivitas harian Mujahid Al-Quran.</p>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Monitor <span class="text-emerald-600">User</span></h2>
+            <p class="text-gray-500 text-sm mt-1">Pengawasan khidmah aktivitas harian User Al-Quran.</p>
         </div>
         
         <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto mt-6 md:mt-0 relative z-10">
@@ -49,7 +49,7 @@
                 </div>
                 <span class="text-[10px] font-black bg-emerald-400/30 px-3 py-1 rounded-full border border-white/10">{{ $completionRate }}% KHATAM</span>
             </div>
-            <p class="text-emerald-100 text-xs mt-6 font-bold uppercase tracking-[0.2em]">Mujahid Aktif</p>
+            <p class="text-emerald-100 text-xs mt-6 font-bold uppercase tracking-[0.2em]">User Aktif</p>
             <h4 class="text-4xl font-black mt-1">{{ number_format($totalActive) }}</h4>
         </div>
         
@@ -107,7 +107,7 @@
                     <div class="w-8 h-8 mr-3 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    Mujahid Aktif ({{ $activeChallengesList->total() }})
+                    User Aktif ({{ $activeChallengesList->total() }})
                 </h3>
             </div>
             
@@ -157,7 +157,7 @@
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                         <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    <p class="text-gray-500 font-bold">Afwan, Jemaah belum ditemukan.</p>
+                    <p class="text-gray-500 font-bold">Afwan, User belum ditemukan.</p>
                 </div>
                 @endforelse
             </div>
@@ -238,7 +238,7 @@
             <form action="{{ route('admin.monitoring.challenges.store') }}" method="POST" class="space-y-5">
                 @csrf
                 <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Jemaah (User)</label>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih User</label>
                     <select name="user_id" required class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium appearance-none">
                         @foreach($users as $u)
                             <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
