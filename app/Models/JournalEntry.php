@@ -50,12 +50,12 @@ class JournalEntry extends Model
     // True if user has filled the before section
     public function getHasBeforeAttribute(): bool
     {
-        return !is_null($this->before_pesan);
+        return !empty($this->before_pesan) || !empty($this->before_perasaan) || !empty($this->before_action);
     }
 
     // True if user has filled the after section
     public function getHasAfterAttribute(): bool
     {
-        return !is_null($this->after_berhasil);
+        return !empty($this->after_berhasil) || !empty($this->after_perubahan) || !empty($this->after_perasaan);
     }
 }

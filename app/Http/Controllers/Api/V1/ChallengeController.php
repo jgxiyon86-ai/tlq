@@ -242,9 +242,9 @@ class ChallengeController extends Controller
         }
 
         $request->validate([
-            'before_pesan'    => 'required|string',
-            'before_perasaan' => 'required|string',
-            'before_action'   => 'required|string',
+            'before_pesan'    => 'nullable|string',
+            'before_perasaan' => 'nullable|string',
+            'before_action'   => 'nullable|string',
         ]);
 
         $entry->update([
@@ -279,18 +279,19 @@ class ChallengeController extends Controller
         }
 
         $request->validate([
-            'after_berhasil'  => 'required|string',
-            'after_perubahan' => 'required|string',
-            'after_perasaan'  => 'required|string',
+            'after_berhasil'  => 'nullable|string',
+            'after_perubahan' => 'nullable|string',
+            'after_perasaan'  => 'nullable|string',
         ]);
 
         $wasCompleted = $entry->is_completed;
+        $isAllFilled = !empty($request->after_berhasil) && !empty($request->after_perubahan) && !empty($request->after_perasaan);
 
         $entry->update([
             'after_berhasil'  => $request->after_berhasil,
             'after_perubahan' => $request->after_perubahan,
             'after_perasaan'  => $request->after_perasaan,
-            'is_completed'    => true,
+            'is_completed'    => $wasCompleted || $isAllFilled,
         ]);
 
         // Advance to next day only if this is the FIRST time it's being completed

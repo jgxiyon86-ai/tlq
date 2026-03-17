@@ -232,9 +232,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           _Field('Apa yang akan kamu lakukan? (What to do)', actionCtrl),
         ],
         onSave: () async {
-          if (pesanCtrl.text.trim().isEmpty || perasaanCtrl.text.trim().isEmpty || actionCtrl.text.trim().isEmpty) {
+          if (pesanCtrl.text.trim().isEmpty && perasaanCtrl.text.trim().isEmpty && actionCtrl.text.trim().isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Afwan, Anda belum selesai mengisi semua datanya. Mari lengkapi catatan pagi ini agar lebih berkah 😊'),
+              content: Text('Tuliskan setidaknya satu hal sebelum menyimpan 😊'),
               backgroundColor: Colors.orange,
             ));
             return;
@@ -279,9 +279,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           _Field('Apa perasaanmu setelah menghidupkan ayat-Nya?', perasaanCtrl),
         ],
         onSave: () async {
-          if (berhasilCtrl.text.trim().isEmpty || perubahanCtrl.text.trim().isEmpty || perasaanCtrl.text.trim().isEmpty) {
+          if (berhasilCtrl.text.trim().isEmpty && perubahanCtrl.text.trim().isEmpty && perasaanCtrl.text.trim().isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Afwan, Anda belum selesai mengisi semua datanya. Mari sempurnakan syukur hari ini dengan melengkapi catatan sore 😊'),
+              content: Text('Tuliskan setidaknya satu hal sebelum menyimpan 😊'),
               backgroundColor: Colors.orange,
             ));
             return;
@@ -327,8 +327,12 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
     final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0;
 
-    final hasBefore = _todayEntry?['before_pesan'] != null;
-    final hasAfter = _todayEntry?['after_berhasil'] != null;
+    final hasBefore = (_todayEntry?['before_pesan'] != null && _todayEntry?['before_pesan'] != '') ||
+                       (_todayEntry?['before_perasaan'] != null && _todayEntry?['before_perasaan'] != '') ||
+                       (_todayEntry?['before_action'] != null && _todayEntry?['before_action'] != '');
+    final hasAfter = (_todayEntry?['after_berhasil'] != null && _todayEntry?['after_berhasil'] != '') ||
+                      (_todayEntry?['after_perubahan'] != null && _todayEntry?['after_perubahan'] != '') ||
+                      (_todayEntry?['after_perasaan'] != null && _todayEntry?['after_perasaan'] != '');
     final hasEntry = _todayEntry != null && _todayEntry!['content'] != null;
 
     return Scaffold(
@@ -484,7 +488,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       color: AppColors.emeraldIslamic,
                       isDone: hasBefore,
                       isLocked: false,
-                      onTap: (!hasBefore || _currentDay == 1) ? _showBeforeDialog : null,
+                      onTap: _showBeforeDialog,
                     ),
                     const SizedBox(height: 12),
 
@@ -500,7 +504,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       color: AppColors.goldIslamic,
                       isDone: hasAfter,
                       isLocked: !hasBefore,
-                      onTap: (hasBefore && (!hasAfter || _currentDay == 1)) ? _showAfterDialog : null,
+                      onTap: hasBefore ? _showAfterDialog : null,
                     ),
 
                     if (hasAfter) ...[
