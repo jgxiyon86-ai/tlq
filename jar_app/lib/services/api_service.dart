@@ -150,34 +150,45 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     
-    final response = await http.get(
-      Uri.parse('$baseUrl/challenges'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-    final data = json.decode(response.body);
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/challenges'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      final data = json.decode(response.body);
 
-    final responseJars = await http.get(
-      Uri.parse('$baseUrl/licenses'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-    final dataJars = json.decode(responseJars.body);
+      final responseJars = await http.get(
+        Uri.parse('$baseUrl/licenses'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      final dataJars = json.decode(responseJars.body);
 
-    final dashboardData = {
-      'active_challenges': data['challenges'] is List ? data['challenges'] : 
-          (data['challenges'] is Map ? data['challenges'].values.toList() : []),
-      'jars': dataJars is List ? dataJars : (dataJars['licenses'] ?? []),
-    };
+      final dashboardData = {
+        'active_challenges': data['challenges'] is List ? data['challenges'] : 
+            (data['challenges'] is Map ? data['challenges'].values.toList() : []),
+        'jars': dataJars is List ? dataJars : (dataJars['licenses'] ?? []),
+      };
 
-    // PROACTIVE SYNC: Cache manual pages AND contents for all owned series
-    for (var jar in (dashboardData['jars'] as List)) {
-      final sId = jar['series_id'].toString();
-      try {
-        await getManualPages(sId); // Cache manual
-        await getBySeries(sId);     // Cache contents
-      } catch (_) {}
+      // Save for offline
+      await prefs.setString('cached_dashboard', json.encode(dashboardData));
+
+      // PROACTIVE SYNC: Cache manual pages AND contents for all owned series
+      for (var jar in (dashboardData['jars'] as List)) {
+        final sId = jar['series_id'].toString();
+        try {
+          await getManualPages(sId); // Cache manual
+          await getBySeries(sId);     // Cache contents
+        } catch (_) {}
+      }
+
+      return dashboardData;
+    } catch (e) {
+      final cached = prefs.getString('cached_dashboard');
+      if (cached != null) {
+        return json.decode(cached);
+      }
+      return {'active_challenges': [], 'jars': []};
     }
-
-    return dashboardData;
   }
 
   static Future<Map<String, dynamic>> updateProfile(String name, String nickname) async {
@@ -388,11 +399,18 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/challenges/$challengeId/history'),
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 10));
+
       if (response.statusCode == 200) {
+        await prefs.setString('cached_history_$challengeId', response.body);
         return json.decode(response.body);
       }
-    } catch (_) {}
+    } catch (_) {
+      final cached = prefs.getString('cached_history_$challengeId');
+      if (cached != null) {
+        return json.decode(cached);
+      }
+    }
     return {'entries': []}; 
   }
 
