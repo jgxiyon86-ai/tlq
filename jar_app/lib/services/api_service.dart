@@ -301,11 +301,12 @@ class ApiService {
     throw Exception(data['message'] ?? 'Gagal menghapus tantangan');
   }
 
-  static Future<Map<String, dynamic>> rollContent(int challengeId, int seriesId, {bool isCatchUp = false}) async {
+  static Future<Map<String, dynamic>> rollContent(int challengeId, int seriesId, {bool isCatchUp = false, int? dayNumber}) async {
     final devId = await getDeviceId();
     final Map<String, dynamic> body = {
       'device_id': devId,
       'is_catch_up': isCatchUp ? '1' : '0',
+      if (dayNumber != null) 'day_number': dayNumber.toString(),
     };
 
     try {

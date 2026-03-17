@@ -237,7 +237,7 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
           const SizedBox(height: 40),
           FadeInUp(
             delay: const Duration(milliseconds: 500),
-            child: Text('Barakallah!',
+            child: Text('Barakallah Fiikum!',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                     fontSize: 32,
@@ -248,24 +248,58 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
           FadeInUp(
             delay: const Duration(milliseconds: 700),
             child: Text(
-                '${widget.challenge['total_days']} hari bukan akhir, tapi awal hidup baru bersama Qur\'an.',
+                'Perjalanan ${widget.challenge['total_days']} hari ini bukanlah akhir, melainkan pintu gerbang menuju hidup yang lebih tenang bersama Cahaya Al-Quran.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                    fontSize: 18,
-                    height: 1.5,
+                    fontSize: 16,
+                    height: 1.6,
                     color: AppColors.emeraldIslamic,
                     fontWeight: FontWeight.w600)),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           FadeInUp(
             delay: const Duration(milliseconds: 900),
             child: Text(
-                'Jadilah terus The Living Quran yang menghidupkan Al Quran dalam setiap langkahmu.',
+                'Teruslah menjadi "The Living Quran" yang menghidupkan ayat-ayat Nya dalam setiap helaan nafas dan langkah kakimu. Semoga istiqomah selalu menyertaimu, Sobat TLQ.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 13,
                     height: 1.5,
                     color: Colors.grey[600])),
+          ),
+          // Discipline Message if missed days
+          if (widget.challenge['completed_entries_count'] != null && 
+              widget.challenge['completed_entries_count'] < widget.challenge['total_days'])
+            FadeInUp(
+              delay: const Duration(milliseconds: 1000),
+              child: Container(
+                margin: const EdgeInsets.only(top: 24),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Text('💡 Catatan Kedisiplinan', 
+                         style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.orange.shade900, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Alhamdulillah tantangan selesai, namun ada beberapa hari yang sempat terlewat. Mari perkuat niat, semoga di tantangan berikutnya kita bisa lebih istiqomah menghidupkan ayat-Nya tepat waktu setiap hari 😊',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.orange.shade800, height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 20),
+          FadeInUp(
+            delay: const Duration(milliseconds: 1100),
+            child: Text('آَمِينَ يَا رَبَّ الْعَالَمِيْن',
+                style: GoogleFonts.amiri(fontSize: 24, color: AppColors.goldIslamic)),
           ),
           const SizedBox(height: 60),
           FadeInUp(

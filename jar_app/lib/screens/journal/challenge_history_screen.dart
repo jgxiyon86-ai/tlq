@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:jar_app/core/app_colors.dart';
 import 'package:jar_app/services/api_service.dart';
 
+import 'package:jar_app/screens/journal/journal_detail_screen.dart';
+
 class ChallengeHistoryScreen extends StatefulWidget {
   final Map<String, dynamic> challenge;
   const ChallengeHistoryScreen({super.key, required this.challenge});
@@ -36,25 +38,25 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
           ? (int.tryParse(challengeData['total_days'].toString()) ?? 40)
           : (int.tryParse(widget.challenge['total_days']?.toString() ?? '40') ?? 40);
       
-      // Map existing entries to their day_number for quick lookup
-      final entryMap = <int, dynamic>{};
-      for (var e in entries) {
-        final day = int.tryParse(e['day_number']?.toString() ?? '0') ?? 0;
-        if (day > 0) entryMap[day] = e;
-      }
+      String todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
       // Generate a full list of all days
       List<dynamic> fullHistory = [];
-      for (int i = 1; i <= totalDays; i++) {
-        if (entryMap.containsKey(i)) {
-          fullHistory.add(entryMap[i]);
-        } else if (i < currentDay) {
-          // MISSED DAY
-          fullHistory.add({'day_number': i, 'status': 'missed'});
+      for (var e in entries) {
+        final m = Map<String, dynamic>.from(e as Map);
+        final entryDate = m['entry_date']?.toString() ?? '';
+        final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
+        
+        if (isCompleted) {
+          m['status'] = 'completed';
+        } else if (entryDate.compareTo(todayStr) < 0) {
+          m['status'] = 'missed'; // Past but not done
+        } else if (entryDate == todayStr) {
+          m['status'] = 'today'; // Today's slot
         } else {
-          // FUTURE / LOCKED DAY
-          fullHistory.add({'day_number': i, 'status': 'locked'});
+          m['status'] = 'locked'; // Future slot
         }
+        fullHistory.add(m);
       }
 
       setState(() {
@@ -107,31 +109,42 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
     final content = entry['content'] ?? {};
 
     if (status == 'missed') {
+      final bool hasAyat = entry['content_id'] != null;
       return FadeInUp(
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.red.withAlpha(10),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.red.withAlpha(30)),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.red.withAlpha(20),
-                child: Text('${entry['day_number']}', 
-                       style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Hari ${entry['day_number']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                  Text('Terlewat / Tidak Diisi ❌', style: GoogleFonts.inter(color: Colors.red, fontSize: 12)),
-                ],
-              )
-            ],
+        child: InkWell(
+          onTap: () async {
+            // Navigate back to challenge screen with this specific entry for catching up
+            Navigator.pop(context, entry); 
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withAlpha(10),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.orange.withAlpha(30)),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.orange.withAlpha(20),
+                  child: Text('${entry['day_number']}', 
+                         style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Hari ${entry['day_number']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                      Text(hasAyat ? 'Ayat Tertinggal (Belum Selesai) ⚠️' : 'Ayat Belum Diambil (Tertinggal) ⚠️', 
+                           style: GoogleFonts.inter(color: Colors.orange, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.orange),
+              ],
+            ),
           ),
         ),
       );
@@ -200,6 +213,23 @@ class _ChallengeHistoryScreenState extends State<ChallengeHistoryScreen> {
                     const SizedBox(height: 8),
                     _buildDetailRow('Keberhasilan', entry['after_berhasil'] ?? '-'),
                   ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => JournalDetailScreen(entry: entry),
+                      )),
+                      icon: const Icon(Icons.visibility_outlined, size: 16),
+                      label: const Text('LIHAT DETAIL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.emeraldIslamic,
+                        side: const BorderSide(color: AppColors.emeraldIslamic),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             )

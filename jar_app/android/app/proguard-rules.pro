@@ -1,0 +1,6 @@
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-keep class com.google.gson.** { *; }
+-keep class com.google.common.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep public class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers class * extends com.google.gson.reflect.TypeToken { *; }

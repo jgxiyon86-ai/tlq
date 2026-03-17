@@ -76,41 +76,27 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       String todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
       Map<String, dynamic>? found;
-      // Priority 1: Match specifically the current_day (INCOMPLETE)
+      
+      // CALENDAR LOGIC: Find entry for TODAY
       for (var e in history) {
-        final m = Map<String, dynamic>.from(e as Map);
-        final entryDay = int.tryParse(m['day_number']?.toString() ?? '0') ?? 0;
-        if (entryDay == currentDayChallenge) {
-          final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
-          if (!isCompleted) {
-            found = m;
-            break;
+          final m = Map<String, dynamic>.from(e as Map);
+          if (m['entry_date']?.toString().startsWith(todayStr) == true) {
+              found = m;
+              break;
           }
-        }
       }
 
-      // Priority 2: Match specifically the current_day (COMPLETED)
-      if (found == null) {
-        for (var e in history) {
-          final m = Map<String, dynamic>.from(e as Map);
-          final entryDay = int.tryParse(m['day_number']?.toString() ?? '0') ?? 0;
-          if (entryDay == currentDayChallenge) {
-            found = m;
-            break;
+      if (mounted) {
+        setState(() {
+          _todayEntry = found;
+          if (found != null) {
+            _currentDay = int.tryParse(found['day_number']?.toString() ?? '1') ?? 1;
           }
-        }
-      }
-
-      // Priority 3: Fallback check by date (ONLY if NOT COMPLETED)
-      if (found == null) {
-        for (var e in history) {
-          final m = Map<String, dynamic>.from(e as Map);
-          final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
-          if (!isCompleted && m['entry_date']?.toString().startsWith(todayStr) == true) {
-            found = m;
-            break;
+          if (challengeData != null) {
+             _debtDays = int.tryParse(challengeData['debt_days']?.toString() ?? '0') ?? 0;
           }
-        }
+          _isLoading = false;
+        });
       }
 
       if (mounted) {
@@ -166,9 +152,16 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   Future<void> _doRoll() async {
     final bool catchUp = _isCatchUpMode;
+    final int? specificDay = (_todayEntry?['day_number'] != null) ? int.tryParse(_todayEntry!['day_number'].toString()) : null;
+    
     try {
       final seriesId = int.tryParse(widget.challenge['series_id']?.toString() ?? '0') ?? 0;
-      final res = await ApiService.rollContent(widget.challenge['id'], seriesId, isCatchUp: catchUp);
+      final res = await ApiService.rollContent(
+        widget.challenge['id'], 
+        seriesId, 
+        isCatchUp: catchUp,
+        dayNumber: catchUp ? specificDay : null,
+      );
       
       if (res['error'] == true) {
          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
@@ -214,16 +207,16 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   // BEFORE dialog
   // ─────────────────────────────────────────────
   void _showBeforeDialog() {
-    final pesanCtrl = TextEditingController();
-    final perasaanCtrl = TextEditingController();
-    final actionCtrl = TextEditingController();
+    final pesanCtrl = TextEditingController(text: _todayEntry?['before_pesan']);
+    final perasaanCtrl = TextEditingController(text: _todayEntry?['before_perasaan']);
+    final actionCtrl = TextEditingController(text: _todayEntry?['before_action']);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _JournalSheet(
-        title: '🌅 Catatan Pagi (Before)',
+        title: (_todayEntry?['before_pesan'] != null) ? '✏️ Edit Catatan Pagi' : '🌅 Catatan Pagi (Before)',
         color: AppColors.emeraldIslamic,
         fields: [
           _Field('Apa pesan cinta-Nya (ayat) yang kamu dapat hari ini?', pesanCtrl),
@@ -231,6 +224,14 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           _Field('Apa yang akan kamu lakukan? (What to do)', actionCtrl),
         ],
         onSave: () async {
+          if (pesanCtrl.text.trim().isEmpty || perasaanCtrl.text.trim().isEmpty || actionCtrl.text.trim().isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Afwan, Anda belum selesai mengisi semua datanya. Mari lengkapi catatan pagi ini agar lebih berkah 😊'),
+              backgroundColor: Colors.orange,
+            ));
+            return;
+          }
+
           Navigator.pop(ctx);
           try {
             final result = await ApiService.saveBefore(
@@ -253,16 +254,16 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   // AFTER dialog
   // ─────────────────────────────────────────────
   void _showAfterDialog() {
-    final berhasilCtrl = TextEditingController();
-    final perubahanCtrl = TextEditingController();
-    final perasaanCtrl = TextEditingController();
+    final berhasilCtrl = TextEditingController(text: _todayEntry?['after_berhasil']);
+    final perubahanCtrl = TextEditingController(text: _todayEntry?['after_perubahan']);
+    final perasaanCtrl = TextEditingController(text: _todayEntry?['after_perasaan']);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _JournalSheet(
-        title: '🌇 Catatan Sore (After)',
+        title: (_todayEntry?['after_berhasil'] != null) ? '✏️ Edit Catatan Sore' : '🌇 Catatan Sore (After)',
         color: AppColors.goldIslamic,
         fields: [
           _Field('Apa yang hari ini berhasil kamu lakukan?', berhasilCtrl),
@@ -270,6 +271,14 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           _Field('Apa perasaanmu setelah menghidupkan ayat-Nya?', perasaanCtrl),
         ],
         onSave: () async {
+          if (berhasilCtrl.text.trim().isEmpty || perubahanCtrl.text.trim().isEmpty || perasaanCtrl.text.trim().isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Afwan, Anda belum selesai mengisi semua datanya. Mari sempurnakan syukur hari ini dengan melengkapi catatan sore 😊'),
+              backgroundColor: Colors.orange,
+            ));
+            return;
+          }
+
           Navigator.pop(ctx);
           try {
             final result = await ApiService.saveAfter(
@@ -347,9 +356,18 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                             ),
                             IconButton(
                               icon: const Icon(Icons.history, color: Colors.white),
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(
-                                builder: (_) => ChallengeHistoryScreen(challenge: widget.challenge),
-                              )),
+                              onPressed: () async {
+                                final result = await Navigator.push(context, MaterialPageRoute(
+                                  builder: (_) => ChallengeHistoryScreen(challenge: widget.challenge),
+                                ));
+                                if (result != null && result is Map<String, dynamic>) {
+                                  setState(() {
+                                    _todayEntry = Map<String, dynamic>.from(result as Map);
+                                    _isCatchUpMode = (result['status'] == 'missed');
+                                    _currentDay = int.tryParse(result['day_number']?.toString() ?? '1') ?? 1;
+                                  });
+                                }
+                              },
                             ),
                           ],
                         ),
@@ -400,30 +418,38 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                   // ══ CATCH UP ALERT (Always visible if debt exists) ══
                   if (_debtDays > 0 && !_isCatchUpMode)
                     FadeInDown(
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.amber.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text('⚡', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Ada $_debtDays hari tertinggal.',
-                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => setState(() => _isCatchUpMode = true),
-                              child: const Text('KEJAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.amber, fontSize: 10)),
-                            ),
-                          ],
-                        ),
+                      child: _buildBanner(
+                        emoji: '⚡',
+                        title: 'Ada $_debtDays hari tertinggal.',
+                        label: 'KEJAR SEKARANG',
+                        onTap: () {
+                           // Open history directly to let user pick which day to tebus
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => ChallengeHistoryScreen(challenge: widget.challenge),
+                            )).then((result) {
+                              if (result != null && result is Map<String, dynamic>) {
+                                setState(() {
+                                  _todayEntry = Map<String, dynamic>.from(result as Map);
+                                  _isCatchUpMode = (result['status'] == 'missed');
+                                  _currentDay = int.tryParse(result['day_number']?.toString() ?? '1') ?? 1;
+                                });
+                              }
+                            });
+                        },
+                      ),
+                    ),
+
+                  if (_isCatchUpMode)
+                    FadeInDown(
+                      child: _buildBanner(
+                        emoji: '⏳',
+                        title: 'Mode Kejar: Mengisi Hari $_currentDay',
+                        color: Colors.orange,
+                        label: 'KEMBALI KE HARI INI',
+                        onTap: () {
+                          setState(() => _isCatchUpMode = false);
+                          _loadTodayEntry();
+                        },
                       ),
                     ),
 
@@ -445,12 +471,12 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       emoji: '🌅',
                       title: 'Catatan Pagi (Before)',
                       subtitle: hasBefore
-                          ? '"${_todayEntry!['before_pesan']}"'
+                          ? (_currentDay == 1 ? 'Tap untuk mengubah: "${_todayEntry!['before_pesan']}"' : '"${_todayEntry!['before_pesan']}"')
                           : 'Tuliskan pesanmu setelah mendapat ayat ini',
                       color: AppColors.emeraldIslamic,
                       isDone: hasBefore,
                       isLocked: false,
-                      onTap: hasBefore ? null : _showBeforeDialog,
+                      onTap: (!hasBefore || _currentDay == 1) ? _showBeforeDialog : null,
                     ),
                     const SizedBox(height: 12),
 
@@ -459,14 +485,14 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       emoji: '🌇',
                       title: 'Catatan Sore (After)',
                       subtitle: hasAfter
-                          ? '"${_todayEntry!['after_berhasil']}"'
+                          ? (_currentDay == 1 ? 'Tap untuk mengubah: "${_todayEntry!['after_berhasil']}"' : '"${_todayEntry!['after_berhasil']}"')
                           : hasBefore
                               ? 'Waktunya menuliskan refleksi harimu!'
                               : '🔒 Isi Catatan Pagi terlebih dahulu',
                       color: AppColors.goldIslamic,
                       isDone: hasAfter,
                       isLocked: !hasBefore,
-                      onTap: (hasBefore && !hasAfter) ? _showAfterDialog : null,
+                      onTap: (hasBefore && (!hasAfter || _currentDay == 1)) ? _showAfterDialog : null,
                     ),
 
                     if (hasAfter) ...[
@@ -515,6 +541,40 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   // ─────────────────────────────────────────────
   // Widget: Greeting + Kocok button
   // ─────────────────────────────────────────────
+  Widget _buildBanner({
+    required String emoji, 
+    required String title, 
+    required String label, 
+    required VoidCallback onTap,
+    Color color = Colors.amber,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withAlpha(50)),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color.withAlpha(200)),
+            ),
+          ),
+          TextButton(
+            onPressed: onTap,
+            child: Text(label, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 10)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGreetingAndKocok(String seriesName, int day) {
     final color = _isCatchUpMode ? Colors.amber.shade700 : AppColors.emeraldIslamic;
     return FadeInUp(

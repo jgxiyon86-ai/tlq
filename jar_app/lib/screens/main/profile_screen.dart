@@ -18,6 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic> _user = {};
   bool _isGoogleUser = false;
   bool _isLoading = false;
+  String _notifLogs = 'Memuat log...';
 
   final _nameCtrl = TextEditingController();
   final _nicknameCtrl = TextEditingController();
@@ -36,6 +37,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUser();
     _loadLicenses();
     _loadNotificationSettings();
+    _refreshLogs();
+  }
+
+  Future<void> _refreshLogs() async {
+    final logs = await NotificationService.getDebugLogs();
+    if (mounted) setState(() => _notifLogs = logs);
   }
 
   Future<void> _loadNotificationSettings() async {
@@ -415,21 +422,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const Divider(height: 24, thickness: 0.5),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await NotificationService.testInstantNotification();
-                        _showSnack('Mengirim notifikasi tes...', AppColors.emeraldIslamic);
-                      },
-                      icon: const Icon(Icons.send_rounded, size: 18),
-                      label: const Text('TES NOTIFIKASI SEKARANG'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.emeraldIslamic,
-                        side: const BorderSide(color: AppColors.emeraldIslamic),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.amber.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Jika notifikasi tidak tepat waktu:',
+                                style: GoogleFonts.inter(fontSize: 12, color: Colors.amber.shade900, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 36),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildStepText('1. Klik tombol "BUKA PENGATURAN" di bawah.'),
+                              _buildStepText('2. Cari menu "Baterai" (Battery).'),
+                              _buildStepText('3. Pilih "Tanpa Batasan" (Unrestricted).'),
+                              _buildStepText('4. Aktifkan "Mulai Otomatis" (Autostart).'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => NotificationService.openSettings(),
+                            icon: const Icon(Icons.settings_suggest_rounded, size: 20),
+                            label: const Text('BUKA PENGATURAN HP'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -569,6 +613,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
             ),
 
+
             const SizedBox(height: 40),
             Center(
               child: Column(
@@ -622,6 +667,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStepText(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(fontSize: 10, color: Colors.amber.shade900),
       ),
     );
   }

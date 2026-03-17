@@ -56,6 +56,8 @@ class ChallengeController extends Controller
             ], 200);
         }
 
+        $startDate = $request->has('started_at') ? \Carbon\Carbon::parse($request->started_at) : now();
+
         // Create the challenge
         $challenge = Challenge::create([
             'user_id' => $user->id,
@@ -64,12 +66,27 @@ class ChallengeController extends Controller
             'total_days' => $totalDays,
             'current_day' => 1,
             'is_completed' => false,
+            'started_at' => $startDate,
         ]);
+
+        // PLOTTING CALENDAR: Generate all journal entries in advance
+        // [Logic for content...]
+        
+        for ($i = 1; $i <= $totalDays; $i++) {
+            JournalEntry::create([
+                'user_id' => $user->id,
+                'challenge_id' => $challenge->id,
+                'content_id' => null, // DO NOT pre-assign verses
+                'day_number' => $i,
+                'entry_date' => $startDate->copy()->addDays($i-1)->toDateString(),
+                'is_completed' => false,
+            ]);
+        }
 
         $daysLabel = $isSevenDays ? '7' : '40';
         return response()->json([
-            'message' => "Alhamdulillah! Tantangan {$daysLabel} hari berhasil dimulai!",
-            'challenge' => $challenge->load('series'),
+            'message' => "Alhamdulillah! Kalender {$daysLabel} hari Anda sudah disiapkan. Selamat menghidupkan Al-Quran!",
+            'challenge' => $challenge->load(['series', 'journalEntries.content']),
         ], 201);
     }
 
@@ -88,20 +105,31 @@ class ChallengeController extends Controller
             ->get();
 
         foreach ($challenges as $c) {
-            // Since we eager loaded journalEntries, this will find it in the collection 
-            // without hitting the database again if we use collection methods
-            $day = $c->current_day;
-            $entry = $c->journalEntries->firstWhere('day_number', $day);
+            // Find entry for TODAY based on calendar date
+            $entry = $c->journalEntries->firstWhere('entry_date', now()->toDateString());
             
-            $c->today_entry = $entry;
+            // If it's day 1 and we just started, we show it. 
+            // If today's slot doesn't exist, challenge is effectively over
+            $c->today_entry = $entry ? $entry->load('content') : null;
             
-            // Check if user has an activated license for this series
-            $c->has_license = License::where('activated_by', $user->id)
-                ->where('series_id', $c->series_id)
-                ->where('is_activated', true)
-                ->exists();
+            // Update current_day display based on today's entry if found
+            if ($entry) {
+                $c->current_day = $entry->day_number;
+            }
+
+            // DISCIPLINE MODE: Check if challenge duration has exceeded total_days
+            $startDate = $c->started_at ?? $c->created_at;
+            $deadline = $startDate->copy()->startOfDay()->addDays($c->total_days); // e.g. Day 1 + 40 days = Day 41 (Expired)
+            
+            if (now()->startOfDay()->greaterThanOrEqualTo($deadline) && !$c->is_completed) {
+                $c->update(['is_completed' => true]);
+                $c->fresh();
+            }
 
             $c->setAttribute('debt_days', $this->getDebtDays($c));
+            
+            // Calculate how many entries were actually filled
+            $c->setAttribute('completed_entries_count', $c->journalEntries()->where('is_completed', true)->count());
         }
 
         return response()->json(['challenges' => $challenges]);
@@ -129,124 +157,50 @@ class ChallengeController extends Controller
      */
     public function rollContent(Request $request, Challenge $challenge)
     {
-        // Use loose comparison to avoid int vs string type mismatch
         if ($challenge->user_id != $request->user()->id) {
             return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
-        if ($challenge->is_completed) {
-            return response()->json(['message' => 'Tantangan ini sudah selesai! MasyaAllah.'], 422);
+        // Find the specific entry for today (Istiqomah) or a specific day_number (Catch up)
+        $date = now()->toDateString();
+        $dayNumber = $request->input('day_number'); // If provided (from history), use it
+        
+        $entryQuery = JournalEntry::where('challenge_id', $challenge->id);
+        if ($dayNumber) {
+            $entryQuery->where('day_number', $dayNumber);
+        } else {
+            $entryQuery->where('entry_date', $date);
+        }
+        
+        $entry = $entryQuery->first();
+
+        if (!$entry) {
+            return response()->json(['message' => 'Slot jurnal tidak ditemukan untuk hari ini.'], 404);
         }
 
-        // Check: User must have an ACTIVATED license for this series
-        $license = License::where('activated_by', $request->user()->id)
-            ->where('series_id', (string)$challenge->series_id) // Cast to string to be safe
-            ->where('is_activated', true)
-            ->first();
-
-        if (!$license) {
+        if ($entry->content_id) {
             return response()->json([
-                'message' => 'Akses Terkunci. Anda harus mengaktivasi Jar seri ini terlebih dahulu untuk mendapatkan ayat harian.'
-            ], 403);
-        }
-
-        // Device check removed — ownership check above is sufficient protection.
-
-        // 1. Check if there's any INCOMPLETE entry first
-        $incompleteEntry = JournalEntry::where('challenge_id', $challenge->id)
-            ->where('is_completed', false)
-            ->first();
-
-        if ($incompleteEntry) {
-            return response()->json([
-                'message' => 'Selesaikan dulu catatan Pagi & Sore Hari ke-' . $incompleteEntry->day_number . ' sebelum lanjut!',
-                'entry' => $incompleteEntry->load('content.series'),
+                'message' => 'Ayat untuk hari ini sudah terbuka.',
+                'entry' => $entry->load('content.series'),
             ], 200);
         }
 
-        $isCatchUp = $request->boolean('is_catch_up');
+        // MOMEN TAKDIR: Pick random content only when requested
+        $content = Content::where('series_id', $challenge->series_id)
+            ->inRandomOrder()
+            ->first();
 
-        // 2. Enforce "1 Day 1 Ayat" for Normal Rolls (Istiqomah)
-        if (!$isCatchUp) {
-            $todayNormalExists = JournalEntry::where('challenge_id', $challenge->id)
-                ->where('entry_date', now()->toDateString())
-                ->where('is_catch_up', false)
-                ->exists();
-
-            if ($todayNormalExists) {
-                $lastEntry = JournalEntry::where('challenge_id', $challenge->id)
-                    ->where('entry_date', now()->toDateString())
-                    ->where('is_catch_up', false)
-                    ->first();
-
-                return response()->json([
-                    'message' => 'Alhamdulillah, jatah Istiqomah hari ini sudah diambil. Silahkan kembali besok, atau gunakan menu "Kejar Ketertinggalan" jika ada.',
-                    'entry' => $lastEntry->load('content.series'),
-                    'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
-                    'already_done_today' => true
-                ], 200);
-            }
-        } else {
-            // Validate if catch-up is allowed (must have debt)
-            $debt = $this->getDebtDays($challenge);
-
-            if ($debt <= 0) {
-                return response()->json([
-                    'message' => 'Luar biasa! Progres Anda sudah sesuai jadwal (Istiqomah). Tidak perlu mengejar ketertinggalan.'
-                ], 422);
-            }
+        if (!$content) {
+            return response()->json(['message' => 'Konten tidak ditemukan.'], 404);
         }
 
-        try {
-            $day = $challenge->current_day;
+        $entry->update(['content_id' => $content->id]);
 
-            // Pick content: Preferred provided content_id (for offline sync), else random
-            if ($request->has('content_id')) {
-                $content = Content::find($request->content_id);
-                // Ensure content belongs to the right series
-                if ($content && $content->series_id != $challenge->series_id) {
-                    $content = null;
-                }
-            } else {
-                $content = Content::where('series_id', $challenge->series_id)
-                    ->inRandomOrder()
-                    ->first();
-            }
-
-            if (!$content) {
-                return response()->json(['message' => 'Konten tidak ditemukan atau tidak tersedia.'], 404);
-            }
-
-            // check if entry for this day already exists (can happen if user rolled but didn't finish)
-            $entry = JournalEntry::where('challenge_id', $challenge->id)
-                ->where('day_number', $day)
-                ->first();
-
-            if (!$entry) {
-                $entry = JournalEntry::create([
-                    'user_id'    => $request->user()->id,
-                    'challenge_id' => $challenge->id,
-                    'content_id' => $content->id,
-                    'day_number' => $day,
-                    'entry_date' => now()->toDateString(),
-                    'is_catch_up' => $isCatchUp,
-                ]);
-            } else {
-                // If exists, just update its date to today if it was caught up but not finished?
-                // Actually, let's just stick to the original entry date to avoid confusion
-            }
-
-            return response()->json([
-                'message' => 'Ayat hari ini siap! Bismillah, selamat menghidupkan Al-Quran.',
-                'entry' => $entry->load('content.series'),
-                'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Gagal mengambil ayat: ' . $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Ayat hari ini siap! Bismillah.',
+            'entry' => $entry->load('content.series'),
+            'challenge' => $challenge->fresh()->setAttribute('debt_days', $this->getDebtDays($challenge)),
+        ], 201);
     }
 
     /**
@@ -287,13 +241,7 @@ class ChallengeController extends Controller
             return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
-        if ($entry->is_completed) {
-            return response()->json([
-                'message' => 'Catatan hari ini sudah lengkap!',
-                'entry' => $entry->load('content'),
-                'challenge' => $entry->challenge->fresh(),
-            ]);
-        }
+        // Allow editing even if is_completed is already true (to support edits on day 1)
 
         if (!$entry->has_before) {
             return response()->json([
@@ -307,6 +255,8 @@ class ChallengeController extends Controller
             'after_perasaan'  => 'required|string',
         ]);
 
+        $wasCompleted = $entry->is_completed;
+
         $entry->update([
             'after_berhasil'  => $request->after_berhasil,
             'after_perubahan' => $request->after_perubahan,
@@ -314,12 +264,14 @@ class ChallengeController extends Controller
             'is_completed'    => true,
         ]);
 
-        // Advance to next day in the challenge
+        // Advance to next day only if this is the FIRST time it's being completed
         $challenge = $entry->challenge;
-        if ($challenge->current_day < $challenge->total_days) {
-            $challenge->increment('current_day');
-        } else {
-            $challenge->update(['is_completed' => true]);
+        if (!$wasCompleted) {
+            if ($challenge->current_day < $challenge->total_days) {
+                $challenge->increment('current_day');
+            } else {
+                $challenge->update(['is_completed' => true]);
+            }
         }
 
         return response()->json([
@@ -381,11 +333,14 @@ class ChallengeController extends Controller
             return response()->json(['message' => 'Unauthorized Access'], 403);
         }
 
+        // REMOVED RESTRICTION: Allow deleting challenge at any day to help user reset / start over
+        /*
         if ($challenge->current_day > 1) {
             return response()->json([
                 'message' => 'Tantangan sudah berjalan lebih dari 1 hari dan tidak bisa dihapus.'
             ], 403);
         }
+        */
 
         $challenge->delete();
 
