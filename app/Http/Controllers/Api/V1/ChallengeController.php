@@ -112,10 +112,20 @@ class ChallengeController extends Controller
 
         foreach ($challenges as $c) {
             // Find entry for TODAY based on calendar date
-            $entry = $c->journalEntries->firstWhere('entry_date', now()->toDateString());
+            // We search for an entry that matches TODAY's date on the server
+            $today = now()->toDateString();
+            $entry = $c->journalEntries->firstWhere('entry_date', $today);
             
-            // If it's day 1 and we just started, we show it. 
-            // If today's slot doesn't exist, challenge is effectively over
+            // Fallback: If no entry matches today's exact date string (timezone shift),
+            // and the challenge is active, try to find the entry that SHOULD be today
+            if (!$entry && !$c->is_completed) {
+                $startedAt = $c->started_at ?? $c->created_at;
+                $dayNumber = (int)($startedAt->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1);
+                if ($dayNumber > 0 && $dayNumber <= $c->total_days) {
+                    $entry = $c->journalEntries->firstWhere('day_number', $dayNumber);
+                }
+            }
+
             $c->today_entry = $entry ? $entry->load('content') : null;
             
             // Update current_day display based on today's entry if found
@@ -179,6 +189,18 @@ class ChallengeController extends Controller
         }
         
         $entry = $entryQuery->first();
+
+        // Fallback: If no entry matches today's exact date string (timezone shift),
+        // and it's not a manual dayNumber request, try to find the entry that SHOULD be today
+        if (!$entry && !$dayNumber) {
+            $startedAt = $challenge->started_at ?? $challenge->created_at;
+            $calculatedDay = (int)($startedAt->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1);
+            if ($calculatedDay > 0 && $calculatedDay <= $challenge->total_days) {
+                $entry = JournalEntry::where('challenge_id', $challenge->id)
+                    ->where('day_number', $calculatedDay)
+                    ->first();
+            }
+        }
 
         if (!$entry) {
             return response()->json(['message' => 'Slot jurnal tidak ditemukan untuk hari ini.'], 404);

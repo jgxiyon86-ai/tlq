@@ -12,6 +12,7 @@ use App\Models\JournalEntry;
 use App\Models\LicenseTransferRequest;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AdminController extends Controller
