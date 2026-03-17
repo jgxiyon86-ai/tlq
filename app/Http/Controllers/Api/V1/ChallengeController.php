@@ -137,10 +137,9 @@ class ChallengeController extends Controller
 
             $c->today_entry = $entry ? $entry->load('content') : null;
             
-            // Update current_day display based on today's entry if found
-            if ($entry) {
-                $c->current_day = $entry->day_number;
-            }
+            // We NO LONGER override current_day display here.
+            // current_day must reflect the ACTUAL progress level from DB.
+            // The calendar lag will be shown via 'debt_days'.
 
             // DISCIPLINE MODE: Strict deadline (No leeway)
             // If total_days = 7, and started on 11th, deadline is 11 + 7 = 18th. 
@@ -174,10 +173,11 @@ class ChallengeController extends Controller
         // If challenge is completed or final reflections are done, debt is effectively 0
         if ($c->is_completed) return 0;
         
-        // Debt = Target Day - current_day (what they SHOULD be on vs what they ARE on)
-        // If targetDay > total_days, we cap it at total_days since it should be finished
-        $maxDay = (int)$c->total_days;
-        $effectiveTarget = min($targetDay, $maxDay);
+        // Debt = What level you SHOULD be on - What level you ARE on
+        // Example: Started 13th. Today 18th (Target Day 6). Progress Level 2.
+        // Debt = 6 - 2 = 4 days missed (2,3,4,5).
+        $maxTarget = (int)$c->total_days;
+        $effectiveTarget = min($targetDay, $maxTarget);
         
         return (int) max(0, $effectiveTarget - $c->current_day);
     }
