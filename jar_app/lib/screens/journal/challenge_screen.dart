@@ -514,26 +514,52 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [AppColors.goldIslamic, Color(0xFFD4A017)],
+                              colors: [AppColors.emeraldIslamic, Color(0xFF0A3D2E)],
                             ),
                             borderRadius: BorderRadius.circular(24),
                           ),
-                          child: Row(
+                          child: Column(
                             children: [
-                              const Text('🎉', style: TextStyle(fontSize: 32)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Hari $currentDay Selesai!',
-                                        style: GoogleFonts.inter(
-                                            color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                    Text('MasyaAllah! Terus semangat ya 💪',
-                                        style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
-                                  ],
-                                ),
+                              Row(
+                                children: [
+                                  const Text('🎉', style: TextStyle(fontSize: 32)),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Hari $currentDay Selesai!',
+                                            style: GoogleFonts.inter(
+                                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Text(currentDay == totalDays 
+                                            ? 'Alhamdulillah, perjalananmu tuntas! MasyaAllah 💪'
+                                            : 'MasyaAllah! Terus semangat ya 💪',
+                                            style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
+                              if (currentDay == totalDays) ...[
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pushReplacement(context, MaterialPageRoute(
+                                        builder: (_) => FinishedChallengeScreen(challenge: widget.challenge),
+                                      ));
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.goldIslamic,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    ),
+                                    child: const Text('Lanjutkan ke Penutupan'),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

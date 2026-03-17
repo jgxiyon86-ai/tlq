@@ -308,9 +308,9 @@ class ChallengeController extends Controller
         if (!$wasCompleted) {
             if ($challenge->current_day < $challenge->total_days) {
                 $challenge->increment('current_day');
-            } else {
-                $challenge->update(['is_completed' => true]);
             }
+            // MODIFIED: We no longer mark challenge as is_completed here immediately.
+            // Completion will happen at the Final Reflections (Closing) step.
         }
 
         return response()->json([
@@ -372,6 +372,7 @@ class ChallengeController extends Controller
 
         $challenge->update([
             'final_reflections' => $request->reflections,
+            'is_completed'      => true,
         ]);
 
         return response()->json([
