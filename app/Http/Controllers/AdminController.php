@@ -150,25 +150,31 @@ class AdminController extends Controller
             ->where('series_id', $request->series_id)
             ->delete();
 
-        $challenge = Challenge::create([
-            'user_id' => $user->id,
-            'series_id' => $request->series_id,
-            'is_seven_days' => $totalDays == 7,
-            'total_days' => $totalDays,
-            'current_day' => 1,
-            'is_completed' => false,
-            'started_at' => $startDate,
-        ]);
+        try {
+            \DB::transaction(function () use ($user, $request, $totalDays, $startDate) {
+                $challenge = Challenge::create([
+                    'user_id' => $user->id,
+                    'series_id' => $request->series_id,
+                    'is_seven_days' => $totalDays == 7,
+                    'total_days' => (int)$totalDays,
+                    'current_day' => 1,
+                    'is_completed' => false,
+                    'started_at' => $startDate,
+                ]);
 
-        for ($i = 1; $i <= $totalDays; $i++) {
-            JournalEntry::create([
-                'user_id' => $user->id,
-                'challenge_id' => $challenge->id,
-                'content_id' => null,
-                'day_number' => $i,
-                'entry_date' => $startDate->copy()->addDays($i-1)->toDateString(),
-                'is_completed' => false,
-            ]);
+                for ($i = 1; $i <= $totalDays; $i++) {
+                    JournalEntry::create([
+                        'user_id' => $user->id,
+                        'challenge_id' => $challenge->id,
+                        'content_id' => null,
+                        'day_number' => $i,
+                        'entry_date' => $startDate->copy()->addDays($i-1)->toDateString(),
+                        'is_completed' => false,
+                    ]);
+                }
+            });
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal membuat tantangan. Pastikan database sudah dimigrasi (Content ID nullable). Error: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Tantangan baru berhasil dibuat untuk ' . $user->name);

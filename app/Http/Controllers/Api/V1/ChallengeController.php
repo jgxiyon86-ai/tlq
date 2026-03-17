@@ -57,36 +57,43 @@ class ChallengeController extends Controller
 
         $startDate = $request->has('started_at') ? \Carbon\Carbon::parse($request->started_at) : now();
 
-        // Create the challenge
-        $challenge = Challenge::create([
-            'user_id' => $user->id,
-            'series_id' => $request->series_id,
-            'is_seven_days' => $isSevenDays,
-            'total_days' => $totalDays,
-            'current_day' => 1,
-            'is_completed' => false,
-            'started_at' => $startDate,
-        ]);
+        // Create the challenge with Transaction
+        try {
+            return \DB::transaction(function () use ($user, $request, $isSevenDays, $totalDays, $startDate) {
+                $challenge = Challenge::create([
+                    'user_id' => $user->id,
+                    'series_id' => $request->series_id,
+                    'is_seven_days' => $isSevenDays,
+                    'total_days' => (int)$totalDays,
+                    'current_day' => 1,
+                    'is_completed' => false,
+                    'started_at' => $startDate,
+                ]);
 
-        // PLOTTING CALENDAR: Generate all journal entries in advance
-        // [Logic for content...]
-        
-        for ($i = 1; $i <= $totalDays; $i++) {
-            JournalEntry::create([
-                'user_id' => $user->id,
-                'challenge_id' => $challenge->id,
-                'content_id' => null, // DO NOT pre-assign verses
-                'day_number' => $i,
-                'entry_date' => $startDate->copy()->addDays($i-1)->toDateString(),
-                'is_completed' => false,
-            ]);
+                for ($i = 1; $i <= $totalDays; $i++) {
+                    JournalEntry::create([
+                        'user_id' => $user->id,
+                        'challenge_id' => $challenge->id,
+                        'content_id' => null, 
+                        'day_number' => $i,
+                        'entry_date' => $startDate->copy()->addDays($i-1)->toDateString(),
+                        'is_completed' => false,
+                    ]);
+                }
+
+                $daysLabel = $isSevenDays ? '7' : '40';
+                return response()->json([
+                    'message' => "Alhamdulillah! Kalender {$daysLabel} hari Anda sudah disiapkan. Selamat menghidupkan Al-Quran!",
+                    'challenge' => $challenge->load(['series', 'journalEntries.content']),
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            \Log::error("Gagal aktivasi tantangan: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Gagal menyiapkan kalender. Pastikan server sudah melakukan migrate database terbaru.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $daysLabel = $isSevenDays ? '7' : '40';
-        return response()->json([
-            'message' => "Alhamdulillah! Kalender {$daysLabel} hari Anda sudah disiapkan. Selamat menghidupkan Al-Quran!",
-            'challenge' => $challenge->load(['series', 'journalEntries.content']),
-        ], 201);
     }
 
     /**
