@@ -75,19 +75,24 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       
       String todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
-      Map<String, dynamic>? found;
-      
-      // CALENDAR LOGIC: Find entry for TODAY
-      for (var e in history) {
-          final m = Map<String, dynamic>.from(e as Map);
-          if (m['entry_date']?.toString().startsWith(todayStr) == true) {
-              found = m;
-              break;
-          }
-      }
-
       if (mounted) {
         setState(() {
+          // Priority 1: Server explicitly tells us which one is today
+          if (responseData['today_entry'] != null) {
+              found = Map<String, dynamic>.from(responseData['today_entry'] as Map);
+          } 
+          
+          // Priority 2: Fallback (Legacy) - search by date
+          if (found == null) {
+              for (var e in history) {
+                  final m = Map<String, dynamic>.from(e as Map);
+                  if (m['entry_date']?.toString().startsWith(todayStr) == true) {
+                      found = m;
+                      break;
+                  }
+              }
+          }
+
           _todayEntry = found;
           if (found != null) {
             _currentDay = int.tryParse(found['day_number']?.toString() ?? '1') ?? 1;

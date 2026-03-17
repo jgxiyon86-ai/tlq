@@ -323,8 +323,21 @@ class ChallengeController extends Controller
             ->orderByDesc('id') // Always newest first
             ->get();
 
+        // Detect Today's Entry for the APK (Timezone resilient)
+        $today = now()->toDateString();
+        $todayEntry = $entries->firstWhere('entry_date', $today);
+        
+        if (!$todayEntry && !$challenge->is_completed) {
+            $startedAt = $challenge->started_at ?? $challenge->created_at;
+            $dayNumber = (int)($startedAt->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1);
+            if ($dayNumber > 0 && $dayNumber <= $challenge->total_days) {
+                $todayEntry = $entries->firstWhere('day_number', $dayNumber);
+            }
+        }
+
         return response()->json([
             'entries' => $entries,
+            'today_entry' => $todayEntry,
             'challenge' => $challenge->setAttribute('debt_days', $this->getDebtDays($challenge))
         ]);
     }
