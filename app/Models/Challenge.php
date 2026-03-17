@@ -19,6 +19,9 @@ class Challenge extends Model
 
     protected $casts = [
         'user_id' => 'integer',
+        'series_id' => 'integer',
+        'total_days' => 'integer',
+        'current_day' => 'integer',
         'is_seven_days' => 'boolean',
         'started_at' => 'datetime',
         'created_at' => 'datetime',

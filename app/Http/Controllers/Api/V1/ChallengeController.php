@@ -118,7 +118,7 @@ class ChallengeController extends Controller
 
             // DISCIPLINE MODE: Check if challenge duration has exceeded total_days
             $startDate = $c->started_at ?? $c->created_at;
-            $deadline = $startDate->copy()->startOfDay()->addDays($c->total_days); // e.g. Day 1 + 40 days = Day 41 (Expired)
+            $deadline = $startDate->copy()->startOfDay()->addDays((int)$c->total_days); // e.g. Day 1 + 40 days = Day 41 (Expired)
             
             if (now()->startOfDay()->greaterThanOrEqualTo($deadline) && !$c->is_completed) {
                 $c->update(['is_completed' => true]);
