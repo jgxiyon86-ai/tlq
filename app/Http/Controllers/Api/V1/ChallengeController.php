@@ -41,9 +41,10 @@ class ChallengeController extends Controller
             ], 403); 
         }
 
-        // Check if ANY challenge for this series is still walking (active)
+        // Check if a challenge of the SAME TYPE for this series is still walking (active)
         $challenge = Challenge::where('user_id', $user->id)
             ->where('series_id', $request->series_id)
+            ->where('is_seven_days', $isSevenDays)
             ->where('is_completed', false)
             ->first();
 

@@ -146,9 +146,10 @@ class AdminController extends Controller
         $totalDays = $request->total_days;
         $startDate = Carbon::parse($request->started_at);
 
-        // Delete existing challenge if any (Bypass for testing)
+        // Delete existing challenge of the SAME TYPE if any (Bypass for testing)
         Challenge::where('user_id', $user->id)
             ->where('series_id', $request->series_id)
+            ->where('is_seven_days', $totalDays == 7)
             ->delete();
 
         try {
