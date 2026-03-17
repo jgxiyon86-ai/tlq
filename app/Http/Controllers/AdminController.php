@@ -70,7 +70,7 @@ class AdminController extends Controller
     {
         $searchQuery = $request->input('q');
 
-        // Stats for Challenges - Global (Cached or Fast Count)
+        // Stats
         $totalActive = Challenge::where('is_completed', false)->count();
         $totalCompleted = Challenge::where('is_completed', true)->count();
         $completionRate = ($totalActive + $totalCompleted) > 0 
@@ -116,6 +116,9 @@ class AdminController extends Controller
             ->paginate(15, ['*'], 'journals_page')
             ->appends(['q' => $searchQuery]);
 
+        $users = User::orderBy('name')->get();
+        $series = Series::all();
+
         return view('admin.monitoring_challenges', compact(
             'activeChallengesList', 
             'recentJournalEntries', 
@@ -123,8 +126,58 @@ class AdminController extends Controller
             'completionRate',
             'liveUsersCount',
             'anomaliesCount',
-            'searchQuery'
+            'searchQuery',
+            'users',
+            'series'
         ));
+    }
+
+    public function storeChallenge(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'series_id' => 'required|exists:series,id',
+            'total_days' => 'required|integer|in:7,40',
+            'started_at' => 'required|date',
+        ]);
+
+        $user = User::find($request->user_id);
+        $totalDays = $request->total_days;
+        $startDate = Carbon::parse($request->started_at);
+
+        // Delete existing challenge if any (Bypass for testing)
+        Challenge::where('user_id', $user->id)
+            ->where('series_id', $request->series_id)
+            ->delete();
+
+        $challenge = Challenge::create([
+            'user_id' => $user->id,
+            'series_id' => $request->series_id,
+            'is_seven_days' => $totalDays == 7,
+            'total_days' => $totalDays,
+            'current_day' => 1,
+            'is_completed' => false,
+            'started_at' => $startDate,
+        ]);
+
+        for ($i = 1; $i <= $totalDays; $i++) {
+            JournalEntry::create([
+                'user_id' => $user->id,
+                'challenge_id' => $challenge->id,
+                'content_id' => null,
+                'day_number' => $i,
+                'entry_date' => $startDate->copy()->addDays($i-1)->toDateString(),
+                'is_completed' => false,
+            ]);
+        }
+
+        return back()->with('success', 'Tantangan baru berhasil dibuat untuk ' . $user->name);
+    }
+
+    public function destroyChallenge(Challenge $challenge)
+    {
+        $challenge->delete();
+        return back()->with('success', 'Tantangan berhasil dihapus.');
     }
 
     public function monitoringLicenses()

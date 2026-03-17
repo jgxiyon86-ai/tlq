@@ -29,6 +29,11 @@
                 </span>
                 LIVE AKTIVITAS
             </div>
+
+            <button onclick="openCreateModal()" class="flex items-center bg-gray-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-emerald-600 transition-colors shadow-lg shadow-gray-200">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Buat Tantangan
+            </button>
         </div>
     </div>
 
@@ -126,9 +131,19 @@
                             </p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm font-black text-emerald-600 tracking-tighter">HARI KE-{{ $c->current_day }}</p>
-                        <p class="text-[10px] font-bold text-gray-400 italic">Mulai {{ $c->created_at->translatedFormat('d M') }}</p>
+                    <div class="flex items-center space-x-2">
+                        <div class="text-right">
+                            <p class="text-sm font-black text-emerald-600 tracking-tighter">HARI KE-{{ $c->current_day }}</p>
+                            <p class="text-[10px] font-bold text-gray-400 italic">Mulai {{ $c->started_at ? $c->started_at->translatedFormat('d M') : $c->created_at->translatedFormat('d M') }}</p>
+                        </div>
+                        
+                        <form action="{{ route('admin.monitoring.challenges.destroy', $c->id) }}" method="POST" onsubmit="return confirm('Hapus paksa tantangan ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="p-2 text-gray-300 hover:text-rose-500 transition-colors">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </form>
                     </div>
                 </div>
                 @empty
@@ -199,6 +214,84 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Create Challenge -->
+<div id="createModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onclick="closeCreateModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100 p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black text-gray-900 tracking-tight" id="modal-title">Mulai <span class="text-emerald-600">Tantangan</span></h3>
+                <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form action="{{ route('admin.monitoring.challenges.store') }}" method="POST" class="space-y-5">
+                @csrf
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Jemaah (User)</label>
+                    <select name="user_id" required class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium appearance-none">
+                        @foreach($users as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Seri Jar</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach($series as $s)
+                        <label class="relative cursor-pointer group">
+                            <input type="radio" name="series_id" value="{{ $s->id }}" class="peer hidden" required>
+                            <div class="p-3 border-2 border-gray-50 rounded-2xl text-center transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 group-hover:bg-gray-50">
+                                <p class="text-xs font-black text-gray-700">{{ $s->name }}</p>
+                            </div>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Durasi</label>
+                        <select name="total_days" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium">
+                            <option value="40">40 Hari (Default)</option>
+                            <option value="7">7 Hari</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tanggal Mulai</label>
+                        <input type="date" name="started_at" value="{{ date('Y-m-d') }}" required
+                            class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 uppercase text-[10px] tracking-[0.2em]">
+                        Konfirmasi & Mulai Takdir
+                    </button>
+                    <p class="text-[9px] text-gray-400 text-center mt-3 font-medium">
+                        Catatan: Menghidupkan tantangan baru akan menghapus tantangan aktif <br> user tersebut pada seri yang sama (Bypass Mode).
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('createModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeCreateModal() {
+        document.getElementById('createModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+</script>
 
 <style>
 /* Animasi halus untuk pagination */

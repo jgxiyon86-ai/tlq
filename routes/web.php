@@ -19,6 +19,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/monitoring/challenges', [AdminController::class, 'monitoringChallenges'])->name('monitoring.challenges');
+    Route::post('/monitoring/challenges', [AdminController::class, 'storeChallenge'])->name('monitoring.challenges.store');
+    Route::delete('/monitoring/challenges/{challenge}', [AdminController::class, 'destroyChallenge'])->name('monitoring.challenges.destroy');
     Route::get('/monitoring/licenses', [AdminController::class, 'monitoringLicenses'])->name('monitoring.licenses');
     Route::get('/licenses', [AdminController::class, 'licenses'])->name('licenses');
     Route::post('/licenses/generate', [AdminController::class, 'generateLicenses'])->name('licenses.generate');
