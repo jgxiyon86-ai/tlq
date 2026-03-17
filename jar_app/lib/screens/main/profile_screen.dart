@@ -413,6 +413,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _eveningTime,
                     () => _selectTime(context, false),
                   ),
+                  const Divider(height: 24, thickness: 0.5),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await NotificationService.testInstantNotification();
+                        _showSnack('Mengirim notifikasi tes...', AppColors.emeraldIslamic);
+                      },
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: const Text('TES NOTIFIKASI SEKARANG'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.emeraldIslamic,
+                        side: const BorderSide(color: AppColors.emeraldIslamic),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

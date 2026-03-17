@@ -4,6 +4,7 @@ import 'package:jar_app/core/app_colors.dart';
 import 'package:jar_app/screens/main/home_screen.dart';
 import 'package:jar_app/screens/auth/register_screen.dart';
 import 'package:jar_app/services/api_service.dart';
+import 'package:jar_app/services/notification_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
@@ -23,6 +24,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await ApiService.login(_emailController.text, _passwordController.text);
+      // Schedule reminders upon successful login
+      NotificationService.scheduleDailyReminders();
+      
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -58,6 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
         googleUser.displayName ?? '',
         googleUser.id,
       );
+
+      // Schedule reminders upon successful login
+      NotificationService.scheduleDailyReminders();
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -117,6 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
           userData['name'] ?? '',
           userData['id'],
         );
+        
+        // Schedule reminders upon successful login
+        NotificationService.scheduleDailyReminders();
+
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -140,6 +151,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await ApiService.phoneLogin('081234567890');
+      
+      // Schedule reminders upon successful login
+      NotificationService.scheduleDailyReminders();
+
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
