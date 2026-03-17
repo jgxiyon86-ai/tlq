@@ -104,8 +104,13 @@ class ChallengeController extends Controller
     {
         $user = $request->user();
         
-        // Eager load everything needed for the dashboard in ONE go
+        // Only return challenges for series the user currently has an ACTIVE license for
+        $activeSeriesIds = $user->licenses()->where('is_activated', true)->pluck('series_id')->toArray();
+
+        // Load challenges (even completed ones, so they stay in history if needed)
+        // BUT only if user owns the license for that series
         $challenges = Challenge::where('user_id', $user->id)
+            ->whereIn('series_id', $activeSeriesIds)
             ->with(['series', 'journalEntries.content'])
             ->orderBy('is_completed', 'asc')
             ->orderBy('updated_at', 'desc')
@@ -137,13 +142,14 @@ class ChallengeController extends Controller
                 $c->current_day = $entry->day_number;
             }
 
-            // DISCIPLINE MODE: Check if challenge duration has exceeded total_days
+            // DISCIPLINE MODE: Only auto-complete if it has been EXPIRED for more than 1 day beyond the deadline
             $startDate = $c->started_at ?? $c->created_at;
-            $deadline = $startDate->copy()->startOfDay()->addDays((int)$c->total_days); // e.g. Day 1 + 40 days = Day 41 (Expired)
+            $deadline = $startDate->copy()->startOfDay()->addDays((int)$c->total_days + 1); // Give 1 extra day leeway
             
             if (now()->startOfDay()->greaterThanOrEqualTo($deadline) && !$c->is_completed) {
+                // If the user hasn't finished, it's marked as done (failed to complete on time)
                 $c->update(['is_completed' => true]);
-                $c->fresh();
+                $c->load('series');
             }
 
             $c->setAttribute('debt_days', $this->getDebtDays($c));
