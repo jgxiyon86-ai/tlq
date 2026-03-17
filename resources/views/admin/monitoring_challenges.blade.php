@@ -187,8 +187,10 @@
                     <div class="ml-5 flex-1">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="font-black text-gray-800 text-sm tracking-tight capitalize">{{ $e->user->name }}</p>
-                                <p class="text-[10px] font-black text-emerald-600 mt-0.5 tracking-widest">{{ $e->content->surah_ayah }}</p>
+                                <p class="font-black text-gray-800 text-sm tracking-tight capitalize">{{ optional($e->user)->name ?? 'User' }}</p>
+                                <p class="text-[10px] font-black {{ $e->content ? 'text-emerald-600' : 'text-gray-400' }} mt-0.5 tracking-widest">
+                                    {{ optional($e->content)->surah_ayah ?? 'BELUM DIKOCOK' }}
+                                </p>
                             </div>
                             <div class="flex flex-col items-end">
                                 <span class="text-[10px] font-black text-amber-700 px-3 py-1 bg-amber-100 rounded-full mb-1">HARI {{ $e->day_number }}</span>
@@ -200,7 +202,9 @@
                                 @endif
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2 line-clamp-2 italic leading-relaxed">"{{ $e->insight_text ?? $e->content->translation_text }}"</p>
+                        <p class="text-xs text-gray-500 mt-2 line-clamp-2 italic leading-relaxed">
+                            "{{ $e->insight_text ?? (optional($e->content)->translation_text ?? 'Menunggu ayat terekam...') }}"
+                        </p>
                         <div class="flex items-center mt-3 pt-3 border-t border-gray-100/50">
                             <svg class="w-3 h-3 text-gray-300 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <p class="text-[9px] font-bold text-gray-400 uppercase tracking-[0.1em]">{{ $e->updated_at->diffForHumans() }}</p>
