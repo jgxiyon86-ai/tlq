@@ -101,6 +101,20 @@ class AdminController extends Controller
             ->paginate(15, ['*'], 'challenges_page')
             ->appends(['q' => $searchQuery]);
 
+        // Run discipline check for the items on the current page
+        foreach ($activeChallengesList as $c) {
+            $startDate = $c->started_at ?? $c->created_at;
+            if (!$startDate) continue;
+            
+            $deadline = $startDate->copy()->startOfDay()->addDays((int)$c->total_days);
+            if (now()->startOfDay()->greaterThanOrEqualTo($deadline) && !$c->is_completed) {
+                $c->update(['is_completed' => true]);
+                // We don't refresh the list now to avoid pagination issues, 
+                // but setting the attribute helps the current view
+                $c->is_completed = true;
+            }
+        }
+
         // 2. Riwayat Perubahan (Journal Entries) with Filter
         $journalsQuery = JournalEntry::with(['user', 'content']);
 

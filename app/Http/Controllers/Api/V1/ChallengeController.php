@@ -142,9 +142,11 @@ class ChallengeController extends Controller
                 $c->current_day = $entry->day_number;
             }
 
-            // DISCIPLINE MODE: Only auto-complete if it has been EXPIRED for more than 1 day beyond the deadline
+            // DISCIPLINE MODE: Strict deadline (No leeway)
+            // If total_days = 7, and started on 11th, deadline is 11 + 7 = 18th. 
+            // On the 18th, it's considered finished/expired if not completed.
             $startDate = $c->started_at ?? $c->created_at;
-            $deadline = $startDate->copy()->startOfDay()->addDays((int)$c->total_days + 1); // Give 1 extra day leeway
+            $deadline = $startDate->copy()->startOfDay()->addDays((int)$c->total_days);
             
             if (now()->startOfDay()->greaterThanOrEqualTo($deadline) && !$c->is_completed) {
                 // If the user hasn't finished, it's marked as done (failed to complete on time)
@@ -173,7 +175,11 @@ class ChallengeController extends Controller
         if ($c->is_completed) return 0;
         
         // Debt = Target Day - current_day (what they SHOULD be on vs what they ARE on)
-        return (int) max(0, $targetDay - $c->current_day);
+        // If targetDay > total_days, we cap it at total_days since it should be finished
+        $maxDay = (int)$c->total_days;
+        $effectiveTarget = min($targetDay, $maxDay);
+        
+        return (int) max(0, $effectiveTarget - $c->current_day);
     }
 
 

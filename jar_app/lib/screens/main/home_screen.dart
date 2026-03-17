@@ -435,6 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final seriesName = challenge['series']?['name'] ?? 'TLQ';
       final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
       final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
+      final debtDays = int.tryParse(challenge['debt_days']?.toString() ?? '0') ?? 0;
       final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.0, 1.0) : 0.0;
       // API returns series_id as int; _allSeries has String ids — normalise both sides
       final seriesId = challenge['series_id']?.toString() ?? '';
@@ -485,9 +486,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 4),
-                    Text('Hari ke-$currentDay dari $totalDays hari',
-                        style: GoogleFonts.inter(
-                            fontSize: 12, color: Colors.grey[600])),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Hari ke-$currentDay dari $totalDays hari',
+                            style: GoogleFonts.inter(
+                                fontSize: 12, color: Colors.grey[600])),
+                        if (debtDays > 0)
+                          Text('Tunggakan $debtDays Hari',
+                              style: GoogleFonts.inter(
+                                  fontSize: 10, color: Colors.red.shade600, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),

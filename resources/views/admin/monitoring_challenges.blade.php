@@ -139,7 +139,21 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <div class="text-right">
-                            <p class="text-sm font-black text-emerald-600 tracking-tighter">HARI KE-{{ $c->current_day }}</p>
+                            @if($c->is_completed)
+                                <p class="text-sm font-black text-gray-400 tracking-tighter">SUDAH SELESAI</p>
+                            @else
+                                <p class="text-sm font-black text-emerald-600 tracking-tighter">HARI KE-{{ $c->current_day }}</p>
+                                @php
+                                    $startDate = $c->started_at ?? $c->created_at;
+                                    if ($startDate) {
+                                        $targetDay = $startDate->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1;
+                                        $debt = max(0, min($c->total_days, $targetDay) - $c->current_day);
+                                    } else { $debt = 0; }
+                                @endphp
+                                @if($debt > 0)
+                                    <p class="text-[9px] font-black text-rose-500 tracking-tight uppercase">Tunggakan {{ $debt }} Hari</p>
+                                @endif
+                            @endif
                             <p class="text-[10px] font-bold text-gray-400 italic">Mulai {{ $c->started_at ? $c->started_at->translatedFormat('d M') : ($c->created_at ? $c->created_at->translatedFormat('d M') : '-') }}</p>
                         </div>
                         
