@@ -125,10 +125,14 @@
                         </div>
                         <div class="ml-4">
                             <p class="font-black text-gray-800 text-sm">{{ $c->user->name }}</p>
-                            <p class="text-[10px] font-bold text-gray-400 flex items-center">
-                                <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                {{ $c->series->name }}
-                                <span class="mx-2 opacity-30">|</span>
+                            <p class="text-[10px] font-bold text-gray-400 flex items-center space-x-2">
+                                <span class="flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    {{ $c->series->name }}
+                                </span>
+                                <span class="opacity-30">|</span>
+                                <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-black tracking-tighter">{{ $c->total_days }} HARI</span>
+                                <span class="opacity-30">|</span>
                                 <span class="text-emerald-500/70">{{ $c->user->email }}</span>
                             </p>
                         </div>
