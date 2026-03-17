@@ -6,6 +6,7 @@ import 'package:jar_app/core/app_colors.dart';
 import 'package:jar_app/screens/jar/manual_book_screen.dart';
 import 'package:jar_app/screens/jar/qr_scanner_screen.dart';
 import 'package:jar_app/screens/journal/challenge_screen.dart';
+import 'package:jar_app/screens/journal/finished_challenge_screen.dart';
 import 'package:jar_app/screens/main/profile_screen.dart';
 import 'package:jar_app/services/api_service.dart';
 
@@ -433,6 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final challenge = Map<String, dynamic>.from(challengeData);
       final seriesName = challenge['series']?['name'] ?? 'TLQ';
+      final isCompleted = challenge['is_completed'] == true;
       final currentDay = int.tryParse(challenge['current_day']?.toString() ?? '1') ?? 1;
       final totalDays = int.tryParse(challenge['total_days']?.toString() ?? '40') ?? 40;
       final debtDays = int.tryParse(challenge['debt_days']?.toString() ?? '0') ?? 0;
@@ -450,12 +452,21 @@ class _HomeScreenState extends State<HomeScreen> {
       return FadeInUp(
       child: GestureDetector(
         onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ChallengeScreen(challenge: challenge),
-            ),
-          );
+          if (isCompleted) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FinishedChallengeScreen(challenge: challenge),
+              ),
+            );
+          } else {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChallengeScreen(challenge: challenge),
+              ),
+            );
+          }
           _loadAll();
         },
         child: Container(
@@ -489,10 +500,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Hari ke-$currentDay dari $totalDays hari',
+                        Text(isCompleted 
+                            ? '🎉 Perjalanan Selesai'
+                            : 'Hari ke-$currentDay dari $totalDays hari',
                             style: GoogleFonts.inter(
-                                fontSize: 12, color: Colors.grey[600])),
-                        if (debtDays > 0)
+                                fontSize: 12, 
+                                color: isCompleted ? AppColors.emeraldIslamic : Colors.grey[600],
+                                fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal)),
+                        if (debtDays > 0 && !isCompleted)
                           Text('Tunggakan $debtDays Hari',
                               style: GoogleFonts.inter(
                                   fontSize: 10, color: Colors.red.shade600, fontWeight: FontWeight.bold)),
@@ -502,12 +517,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
-                        value: progress,
+                        value: isCompleted ? 1.0 : progress,
                         backgroundColor: Colors.grey.shade100,
-                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                        valueColor: AlwaysStoppedAnimation<Color>(isCompleted ? AppColors.goldIslamic : color),
                         minHeight: 6,
                       ),
                     ),
+                    if (isCompleted) ...[
+                      const SizedBox(height: 8),
+                      Text('Ketuk untuk melihat hasil & rapotan ✨', 
+                        style: GoogleFonts.inter(fontSize: 10, color: AppColors.goldIslamic, fontWeight: FontWeight.w600)),
+                    ],
                   ],
                 ),
               ),
