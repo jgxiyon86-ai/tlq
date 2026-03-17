@@ -54,19 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _myJars = data['jars'];
-          // Filter challenges: show only those with active licenses
-          final rawChallenges = data['active_challenges'] as List;
-          // Use toString() on BOTH sides — API returns int, _allSeries has String ids
-          final ownedSeriesIds = (_myJars)
-              .map((j) => j['series_id']?.toString() ?? '')
-              .where((s) => s.isNotEmpty)
-              .toSet();
-
-          _myChallenges = rawChallenges.where((c) {
-            final sid = c['series_id']?.toString() ?? '';
-            return ownedSeriesIds.contains(sid);
-          }).toList();
-
+          // Display all active challenges from the server without local filtering
+          _myChallenges = data['active_challenges'] as List;
           _isLoading = false;
         });
       }

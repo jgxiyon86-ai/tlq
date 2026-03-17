@@ -60,4 +60,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(License::class, 'activated_by');
     }
+
+    public function challenges()
+    {
+        return $this->hasMany(Challenge::class);
+    }
 }
