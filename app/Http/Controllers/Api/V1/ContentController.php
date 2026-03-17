@@ -10,6 +10,22 @@ use Illuminate\Http\Request;
 class ContentController extends Controller
 {
     /**
+     * Get all contents for a specific series. (Used for offline caching)
+     */
+    public function index(Request $request)
+    {
+        $request->validate([
+            'series_id' => 'required|exists:series,id',
+        ]);
+
+        $contents = Content::where('series_id', $request->series_id)->get();
+
+        return response()->json([
+            'contents' => $contents
+        ]);
+    }
+
+    /**
      * Get a random content (shake feature) for a specific license.
      */
     public function shake(Request $request)

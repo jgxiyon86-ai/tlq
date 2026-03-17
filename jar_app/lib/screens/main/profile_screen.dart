@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:jar_app/core/app_colors.dart';
 import 'package:jar_app/screens/auth/login_screen.dart';
 import 'package:jar_app/services/api_service.dart';
+import 'package:jar_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -24,13 +25,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _newPassCtrl = TextEditingController();
   final _confirmPassCtrl = TextEditingController();
   List<dynamic> _licenses = [];
+  
+  TimeOfDay _morningTime = const TimeOfDay(hour: 5, minute: 0);
+  TimeOfDay _eveningTime = const TimeOfDay(hour: 17, minute: 0);
+
 
   @override
   void initState() {
     super.initState();
     _loadUser();
     _loadLicenses();
+    _loadNotificationSettings();
   }
+
+  Future<void> _loadNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _morningTime = TimeOfDay(
+        hour: prefs.getInt('notif_morning_hour') ?? 5,
+        minute: prefs.getInt('notif_morning_minute') ?? 0,
+      );
+      _eveningTime = TimeOfDay(
+        hour: prefs.getInt('notif_evening_hour') ?? 17,
+        minute: prefs.getInt('notif_evening_minute') ?? 0,
+      );
+    });
+  }
+
+  Future<void> _saveNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('notif_morning_hour', _morningTime.hour);
+    await prefs.setInt('notif_morning_minute', _morningTime.minute);
+    await prefs.setInt('notif_evening_hour', _eveningTime.hour);
+    await prefs.setInt('notif_evening_minute', _eveningTime.minute);
+    
+    // Reschedule notifications with new times
+    await NotificationService.scheduleDailyReminders();
+    _showSnack('Jadwal pengingat berhasil diperbarui!', AppColors.emeraldIslamic);
+  }
+
+  Future<void> _selectTime(BuildContext context, bool isMorning) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: isMorning ? _morningTime : _eveningTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.emeraldIslamic,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textDark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (isMorning) {
+          _morningTime = picked;
+        } else {
+          _eveningTime = picked;
+        }
+      });
+      _saveNotificationSettings();
+    }
+  }
+
 
   Future<void> _loadLicenses() async {
     try {
@@ -328,6 +390,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 20),
 
+            // Notification Settings
+            _SectionCard(
+              title: '🔔 Notifikasi & Pengingat',
+              child: Column(
+                children: [
+                   Text(
+                    'Atur jadwal pengingat harian sesuai kenyamanan Anda di lokasi Anda saat ini.',
+                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTimeTile(
+                    '🌅 Pengingat Pagi', 
+                    'Untuk memulai tantangan & ambil ayat',
+                    _morningTime,
+                    () => _selectTime(context, true),
+                  ),
+                  const Divider(height: 24, thickness: 0.5),
+                  _buildTimeTile(
+                    '🌇 Pengingat Sore', 
+                    'Untuk mengisi catatan perubahan (After)',
+                    _eveningTime,
+                    () => _selectTime(context, false),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+
+            const SizedBox(height: 20),
+
             const SizedBox(height: 28),
 
             // Profile Form has been moved above
@@ -475,7 +569,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildTimeTile(String title, String subtitle, TimeOfDay time, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(subtitle, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.emeraldIslamic.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                time.format(context),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold, 
+                  color: AppColors.emeraldIslamic,
+                  fontSize: 16
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInput(String label, TextEditingController ctrl,
+
       {bool obscure = false}) {
     return TextField(
       controller: ctrl,

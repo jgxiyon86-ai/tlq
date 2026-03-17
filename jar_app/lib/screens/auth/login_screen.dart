@@ -182,9 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
                   FadeInDown(
                     child: Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: AppColors.amberIslamic,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
@@ -194,13 +194,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         ],
                       ),
-                      child: const Text(
-                        'Q',
-                        style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.emeraldIslamic,
-                        ),
+                      child: Image.asset(
+                        'assets/images/logo_tlq.png',
+                        height: 60,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),

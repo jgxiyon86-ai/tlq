@@ -35,6 +35,7 @@ Route::group(['prefix' => 'v1'], function () {
         Route::post('/licenses/transfer', [LicenseController::class, 'transfer']);
 
         // Content
+        Route::get('/contents', [ContentController::class, 'index']);
         Route::post('/licenses/shake', [ContentController::class, 'shake']);
 
         // Challenge & Journal

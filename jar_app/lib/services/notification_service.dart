@@ -1,6 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -22,26 +24,43 @@ class NotificationService {
         // Handle notification tap if needed
       },
     );
+
+    // Request permissions for Android 13+
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+    
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestExactAlarmsPermission();
   }
 
   static Future<void> scheduleDailyReminders() async {
-    await scheduleDaily5AMReminder();
-    await scheduleDaily5PMReminder();
+    await scheduleDailyMorningReminder();
+    await scheduleDailyEveningReminder();
   }
 
-  static Future<void> scheduleDaily5AMReminder() async {
+  static Future<void> scheduleDailyMorningReminder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hour = prefs.getInt('notif_morning_hour') ?? 5;
+    final minute = prefs.getInt('notif_morning_minute') ?? 0;
+
     await _notificationsPlugin.zonedSchedule(
       101,
-      '🌅 Waktunya Tantangan TLQ!',
-      'Bismillah, mari mulai harimu dengan menghidupkan Al-Quran. Klik untuk ambil ayat hari ini.',
-      _nextInstanceOfTime(5),
+      '🌅 Bismillah, Waktunya TLQ!',
+      'Mari awali pagimu dengan keberkahan Al-Quran. Klik untuk mengambil ayat pilihanmu hari ini.',
+      _nextInstanceOfTime(hour, minute),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'challenge_reminders_morning',
-          'Morning Reminders',
-          channelDescription: 'Daily reminder at 5 AM to start the challenge',
+          'Peringatan Pagi',
+          channelDescription: 'Pengingat harian untuk memulai tantangan',
           importance: Importance.max,
           priority: Priority.high,
+          visibility: NotificationVisibility.public,
+          fullScreenIntent: true,
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -51,19 +70,25 @@ class NotificationService {
     );
   }
 
-  static Future<void> scheduleDaily5PMReminder() async {
+
+  static Future<void> scheduleDailyEveningReminder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hour = prefs.getInt('notif_evening_hour') ?? 17;
+    final minute = prefs.getInt('notif_evening_minute') ?? 0;
+
     await _notificationsPlugin.zonedSchedule(
       102,
-      '🌇 Waktunya Catatan Sore!',
-      'Alhamdulillah harimu hampir usai. Yuk isi Catatan Soremu untuk melihat perubahan hari ini!',
-      _nextInstanceOfTime(17),
+      '🌇 Alhamdulillah, Waktunya Catatan Sore!',
+      'Hari hampir usai, yuk abadikan mutiara hikmah dari ayatmu hari ini di Catatan Sore.',
+      _nextInstanceOfTime(hour, minute),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'challenge_reminders_evening',
-          'Evening Reminders',
-          channelDescription: 'Daily reminder at 5 PM to fill the after journal',
+          'Peringatan Sore',
+          channelDescription: 'Pengingat harian untuk mengisi catatan sore',
           importance: Importance.max,
           priority: Priority.high,
+          visibility: NotificationVisibility.public,
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -73,13 +98,17 @@ class NotificationService {
     );
   }
 
-  static tz.TZDateTime _nextInstanceOfTime(int hour) {
+
+  static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    // This uses tz.local which is the DEVICE's local timezone.
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour);
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
     return scheduledDate;
   }
+
+
 }

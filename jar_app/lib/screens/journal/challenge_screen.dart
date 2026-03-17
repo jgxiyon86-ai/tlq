@@ -79,7 +79,8 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       // Priority 1: Match specifically the current_day (INCOMPLETE)
       for (var e in history) {
         final m = Map<String, dynamic>.from(e as Map);
-        if (m['day_number'] == currentDayChallenge) {
+        final entryDay = int.tryParse(m['day_number']?.toString() ?? '0') ?? 0;
+        if (entryDay == currentDayChallenge) {
           final isCompleted = m['is_completed'] == true || m['is_completed'] == 1 || m['is_completed'] == "1";
           if (!isCompleted) {
             found = m;
@@ -92,7 +93,8 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       if (found == null) {
         for (var e in history) {
           final m = Map<String, dynamic>.from(e as Map);
-          if (m['day_number'] == currentDayChallenge) {
+          final entryDay = int.tryParse(m['day_number']?.toString() ?? '0') ?? 0;
+          if (entryDay == currentDayChallenge) {
             found = m;
             break;
           }
@@ -693,6 +695,20 @@ class _ChallengeScreenState extends State<ChallengeScreen>
               ),
               const SizedBox(height: 6),
               Text(content['insight']?.toString() ?? '',
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[700])),
+            ],
+            if (content['action_plan'] != null) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                   const Icon(Icons.task_alt, size: 16, color: AppColors.emeraldIslamic),
+                  const SizedBox(width: 6),
+                  Text('What to Do', style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.emeraldIslamic)),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(content['action_plan']?.toString() ?? '',
                   style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[700])),
             ],
           ],
