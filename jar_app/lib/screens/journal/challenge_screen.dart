@@ -95,16 +95,23 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
       if (mounted) {
         setState(() {
-          _todayEntry = found;
+          // IMPORTANT: Do not overwrite if we just rolled offline successfully
+          final bool isOfflinePlaceholder = _todayEntry?['is_offline_placeholder'] == true;
+          if (isOfflinePlaceholder && found == null) {
+            // Keep the placeholder
+          } else {
+            _todayEntry = found;
+          }
+
           if (found != null) {
             _currentDay = int.tryParse(found['day_number']?.toString() ?? '1') ?? 1;
-          } else {
+          } else if (!isOfflinePlaceholder) {
             _currentDay = currentDayChallenge;
           }
           
           if (challengeData != null) {
              _debtDays = int.tryParse(challengeData['debt_days']?.toString() ?? '0') ?? 0;
-          } else {
+          } else if (!isOfflinePlaceholder) {
              _debtDays = int.tryParse(widget.challenge['debt_days']?.toString() ?? '0') ?? 0;
           }
           _isLoading = false;
@@ -195,9 +202,11 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       if (mounted) {
         setState(() => _isRevealing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red));
       }
     } finally {
+      // ONLY background load if it wasn't an offline success (to avoid flicker/reversion)
+      // Actually, since we now update the local history cache in ApiService, background load is safe!
       await _loadTodayEntry(background: true);
     }
   }

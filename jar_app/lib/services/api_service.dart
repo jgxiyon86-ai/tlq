@@ -336,13 +336,13 @@ class ApiService {
       }
       throw Exception(data['message'] ?? 'Roll failed');
     } catch (e) {
-      if (e.toString().contains('SocketException') || e.toString().contains('Timeout')) {
+      if (e.toString().contains('SocketException') || e.toString().contains('Timeout') || e.toString().contains('Network')) {
         // OFFLINE MODE: Pick from cache
         final prefs = await SharedPreferences.getInstance();
         final cached = prefs.getString('cached_contents_$seriesId');
         if (cached != null) {
           final data = json.decode(cached);
-          final List<dynamic> contents = data['contents'] ?? [];
+          final List<dynamic> contents = (data is Map) ? (data['contents'] ?? []) : [];
           if (contents.isNotEmpty) {
             // Pick a random one locally
             final randomContent = (List.from(contents)..shuffle()).first;
@@ -351,16 +351,32 @@ class ApiService {
             body['content_id'] = randomContent['id'].toString();
             await _addToQueue('$baseUrl/challenges/$challengeId/roll', body);
 
+            final offlineEntry = {
+              'id': -1, // Temporary ID
+              'content': randomContent,
+              'content_id': randomContent['id'],
+              'is_completed': false,
+              'is_catch_up': isCatchUp,
+              'day_number': '?', // Will be synced by server
+              'entry_date': DateTime.now().toIso8601String(),
+              'is_offline_placeholder': true,
+            };
+
+            // PERSISTENCE: Update history cache so loadTodayEntry finds it
+            final historyKey = 'cached_history_$challengeId';
+            final historyCached = prefs.getString(historyKey);
+            if (historyCached != null) {
+              final historyData = json.decode(historyCached);
+              if (historyData is Map && historyData['entries'] is List) {
+                historyData['entries'].add(offlineEntry);
+                await prefs.setString(historyKey, json.encode(historyData));
+              }
+            }
+
             return {
               'offline': true,
               'message': 'Ayat dipilih secara offline. Hubungkan internet nanti untuk sinkronisasi.',
-              'entry': {
-                'id': -1, // Temporary ID
-                'content': randomContent,
-                'is_completed': false,
-                'is_catch_up': isCatchUp,
-                'day_number': '?', // Will be synced by server
-              }
+              'entry': offlineEntry,
             };
           }
         }
