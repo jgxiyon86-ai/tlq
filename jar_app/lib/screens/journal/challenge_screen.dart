@@ -479,33 +479,44 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                     const SizedBox(height: 16),
 
                     // Before card
-                    _buildJournalCard(
-                      emoji: '🌅',
-                      title: 'Catatan Pagi (Before)',
-                      subtitle: hasBefore
-                          ? (_currentDay == 1 ? 'Tap untuk mengubah: "${_todayEntry!['before_pesan']}"' : '"${_todayEntry!['before_pesan']}"')
-                          : 'Tuliskan pesanmu setelah mendapat ayat ini',
-                      color: AppColors.emeraldIslamic,
-                      isDone: hasBefore,
-                      isLocked: false,
-                      onTap: _showBeforeDialog,
-                    ),
+                    // Always editable if the entry belongs to today or catch-up mode
+                    Builder(builder: (ctx) {
+                      final entryDate = _todayEntry?['entry_date']?.toString() ?? '';
+                      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+                      final isToday = entryDate == todayStr || _isCatchUpMode;
+                      return _buildJournalCard(
+                        emoji: '🌅',
+                        title: 'Catatan Pagi (Before)',
+                        subtitle: hasBefore
+                            ? (isToday ? '✏️ Tap untuk mengubah: "${_todayEntry!['before_pesan']}"' : '"${_todayEntry!['before_pesan']}"')
+                            : 'Tuliskan pesanmu setelah mendapat ayat ini',
+                        color: AppColors.emeraldIslamic,
+                        isDone: hasBefore,
+                        isLocked: false,
+                        onTap: _showBeforeDialog,
+                      );
+                    }),
                     const SizedBox(height: 12),
 
-                    // After card
-                    _buildJournalCard(
-                      emoji: '🌇',
-                      title: 'Catatan Sore (After)',
-                      subtitle: hasAfter
-                          ? (_currentDay == 1 ? 'Tap untuk mengubah: "${_todayEntry!['after_berhasil']}"' : '"${_todayEntry!['after_berhasil']}"')
-                          : hasBefore
-                              ? 'Waktunya menuliskan refleksi harimu!'
-                              : '🔒 Isi Catatan Pagi terlebih dahulu',
-                      color: AppColors.goldIslamic,
-                      isDone: hasAfter,
-                      isLocked: !hasBefore,
-                      onTap: hasBefore ? _showAfterDialog : null,
-                    ),
+                    // After card — always editable today
+                    Builder(builder: (ctx) {
+                      final entryDate = _todayEntry?['entry_date']?.toString() ?? '';
+                      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+                      final isToday = entryDate == todayStr || _isCatchUpMode;
+                      return _buildJournalCard(
+                        emoji: '🌇',
+                        title: 'Catatan Sore (After)',
+                        subtitle: hasAfter
+                            ? (isToday ? '✏️ Tap untuk mengubah: "${_todayEntry!['after_berhasil']}"' : '"${_todayEntry!['after_berhasil']}"')
+                            : hasBefore
+                                ? 'Waktunya menuliskan refleksi harimu!'
+                                : '🔒 Isi Catatan Pagi terlebih dahulu',
+                        color: AppColors.goldIslamic,
+                        isDone: hasAfter,
+                        isLocked: !hasBefore,
+                        onTap: hasBefore ? _showAfterDialog : null,
+                      );
+                    }),
 
                     if (hasAfter) ...[
                       const SizedBox(height: 24),

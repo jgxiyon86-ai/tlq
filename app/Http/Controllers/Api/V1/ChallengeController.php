@@ -158,6 +158,9 @@ class ChallengeController extends Controller
             
             // Calculate how many entries were actually filled
             $c->setAttribute('completed_entries_count', $c->journalEntries->where('is_completed', true)->count());
+            
+            // Flag: has the user already submitted final reflections?
+            $c->setAttribute('has_reflections', !empty($c->final_reflections));
         }
 
         return response()->json(['challenges' => $challenges]);
