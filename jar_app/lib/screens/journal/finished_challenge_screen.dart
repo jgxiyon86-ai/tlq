@@ -45,8 +45,8 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
       
       if (mounted) {
         _pageController.nextPage(
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOutBack,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.fastOutSlowIn,
         );
       }
     } catch (e) {
@@ -60,6 +60,27 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
     }
   }
 
+  Map<String, int> _calculateStats() {
+    final entries = widget.challenge['journal_entries'] as List? ?? [];
+    final totalDays = int.tryParse(widget.challenge['total_days']?.toString() ?? '0') ?? 0;
+    
+    int onTime = 0;
+    int catchUp = 0;
+
+    for (var e in entries) {
+      if (e['is_completed'] == true || e['is_completed'] == 1) {
+        if (e['is_catch_up'] == true || e['is_catch_up'] == 1) {
+          catchUp++;
+        } else {
+          onTime++;
+        }
+      }
+    }
+
+    int missed = totalDays - (onTime + catchUp);
+    return {'onTime': onTime, 'catchUp': catchUp, 'missed': (missed < 0 ? 0 : missed)};
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,9 +91,123 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
         onPageChanged: (idx) => setState(() => _currentPage = idx),
         children: [
           _buildReflectionsStep(),
+          _buildSummaryStep(), // New Stats Page
           _buildCelebrationStep(),
         ],
       ),
+    );
+  }
+
+  Widget _buildSummaryStep() {
+    final stats = _calculateStats();
+    final total = stats['onTime']! + stats['catchUp']!;
+    
+    return Container(
+      color: const Color(0xFFF9FAFB),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              FadeInDown(
+                child: Text('Muhasabah Perjalanan ✨',
+                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.emeraldIslamic, letterSpacing: 1.5)),
+              ),
+              const SizedBox(height: 12),
+              FadeInDown(
+                delay: const Duration(milliseconds: 200),
+                child: Text('Rapotan Amalmu',
+                    style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: const Color(0xFF1A2E1A))),
+              ),
+              const SizedBox(height: 40),
+              
+              // Statistics Box
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 30)],
+                  border: Border.all(color: Colors.grey.shade100),
+                ),
+                child: Column(
+                  children: [
+                    _buildStatRow('Hari Mujahadah', '${stats['onTime']} Hari', 'Tepat Waktu (Disiplin)', AppColors.emeraldIslamic, Icons.verified_user),
+                    const Divider(height: 40),
+                    _buildStatRow('Hari Perjuangan', '${stats['catchUp']} Hari', 'Mode Kejar (Ijtihad)', Colors.amber.shade700, Icons.flash_on),
+                    const Divider(height: 40),
+                    _buildStatRow('Hari Terlewat', '${stats['missed']} Hari', 'Butuh Perbaikan Niat', Colors.red.shade400, Icons.hourglass_empty),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 40),
+              FadeInUp(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.emeraldIslamic.withAlpha(10),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: AppColors.emeraldIslamic),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Total $total hari telah kamu lalui bersama Al-Quran kali ini. Setiap detikmu adalah saksi di akhirat kelak.',
+                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.emeraldIslamic, fontWeight: FontWeight.w600, height: 1.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 60),
+              FadeInUp(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 600), curve: Curves.easeInOut),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.goldIslamic,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      elevation: 0,
+                    ),
+                    child: Text('Lihat Pesan Untukmu ➔', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value, String sub, Color color, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(color: color.withAlpha(20), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500], fontWeight: FontWeight.bold)),
+              const SizedBox(height: 2),
+              Text(sub, style: GoogleFonts.inter(fontSize: 10, color: Colors.grey[400])),
+            ],
+          ),
+        ),
+        Text(value, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+      ],
     );
   }
 
@@ -95,96 +230,56 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Alhamdulillah!',
+                    Text('Masha Allah!',
                         style: GoogleFonts.inter(
                             color: AppColors.emeraldIslamic,
                             fontSize: 28,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Text(
-                        'Kamu telah menyelesaikan tantangan ini. Mari catat perubahan yang Allah berikan dalam hidupmu.',
+                        'Mari sejenak menoleh ke belakang, perubahan indah apa yang Allah titipkan selama perjalanan ini?',
                         style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14)),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
               
-              // Table Header
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.emeraldIslamic,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text('ASPEK HIDUP',
-                          style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12)),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text('PERUBAHAN YANG ALLAH BERIKAN',
-                          style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12)),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Table Body
               ..._controllers.entries.map((entry) {
                 return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(color: Colors.grey.shade200),
-                      right: BorderSide(color: Colors.grey.shade200),
-                      bottom: BorderSide(color: Colors.grey.shade200),
-                    ),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.grey.shade100),
+                    boxShadow: [BoxShadow(color: Colors.black.withAlpha(2), blurRadius: 10)],
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          color: Colors.grey.shade50,
-                          child: Text(entry.key,
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: AppColors.emeraldIslamic)),
+                      Text(entry.key.toUpperCase(),
+                          style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10,
+                              letterSpacing: 1,
+                              color: AppColors.emeraldIslamic)),
+                      TextField(
+                        controller: entry.value,
+                        maxLines: null,
+                        decoration: const InputDecoration(
+                          hintText: 'Perubahan yang dirasakan...',
+                          hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.only(top: 8),
                         ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: TextField(
-                            controller: entry.value,
-                            maxLines: null,
-                            decoration: const InputDecoration(
-                              hintText: 'Tulis di sini...',
-                              hintStyle: TextStyle(fontSize: 12),
-                              border: InputBorder.none,
-                            ),
-                            style: GoogleFonts.inter(fontSize: 13),
-                          ),
-                        ),
+                        style: GoogleFonts.inter(fontSize: 14, height: 1.5),
                       ),
                     ],
                   ),
                 );
               }).toList(),
 
-              const SizedBox(height: 32),
-              
+              const SizedBox(height: 24),
               FadeInUp(
                 child: SizedBox(
                   width: double.infinity,
@@ -193,8 +288,8 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.emeraldIslamic,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       elevation: 0,
                     ),
                     child: _isSaving
@@ -260,46 +355,19 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
           FadeInUp(
             delay: const Duration(milliseconds: 900),
             child: Text(
-                'Teruslah menjadi "The Living Quran" yang menghidupkan ayat-ayat Nya dalam setiap helaan nafas dan langkah kakimu. Semoga istiqomah selalu menyertaimu, Sobat TLQ.',
+                'Syukron atas mujahadah (kesungguhan) kamu dalam menghidupkan ayat-ayat Nya. Semoga tiap langkah kakimu kini selalu dibimbing oleh Al-Quran. Teruslah istiqomah, Sobat TLQ.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                     fontSize: 13,
-                    height: 1.5,
+                    height: 1.8,
                     color: Colors.grey[600])),
           ),
-          // Discipline Message if missed days
-          if (widget.challenge['completed_entries_count'] != null && 
-              widget.challenge['completed_entries_count'] < widget.challenge['total_days'])
-            FadeInUp(
-              delay: const Duration(milliseconds: 1000),
-              child: Container(
-                margin: const EdgeInsets.only(top: 24),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.orange.shade200),
-                ),
-                child: Column(
-                  children: [
-                    Text('💡 Catatan Kedisiplinan', 
-                         style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.orange.shade900, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Alhamdulillah tantangan selesai, namun ada beberapa hari yang sempat terlewat. Mari perkuat niat, semoga di tantangan berikutnya kita bisa lebih istiqomah menghidupkan ayat-Nya tepat waktu setiap hari 😊',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.orange.shade800, height: 1.5),
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
           FadeInUp(
             delay: const Duration(milliseconds: 1100),
             child: Text('آَمِينَ يَا رَبَّ الْعَالَمِيْن',
-                style: GoogleFonts.amiri(fontSize: 24, color: AppColors.goldIslamic)),
+                style: GoogleFonts.amiri(fontSize: 28, color: AppColors.goldIslamic)),
           ),
           const SizedBox(height: 60),
           FadeInUp(
@@ -309,7 +377,7 @@ class _FinishedChallengeScreenState extends State<FinishedChallengeScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.emeraldIslamic,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
               child: const Text('Ke Dashboard Utama'),

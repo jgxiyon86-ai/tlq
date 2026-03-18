@@ -681,7 +681,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            _isShaking ? 'Goyang atau tap berhenti...' : 'Goyangkan HP atau tekan tombol',
+            _isShaking ? 'Berdoa & tap berhenti...' : 'Goyangkan botol atau tekan tombol',
             style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13, fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 24),
@@ -709,11 +709,11 @@ class _ChallengeScreenState extends State<ChallengeScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(_isShaking ? Icons.stop_rounded : Icons.shuffle_rounded,
+                  Icon(_isShaking ? Icons.stop_rounded : Icons.menu_book_rounded,
                       color: Colors.white, size: 22),
                   const SizedBox(width: 10),
                   Text(
-                    _isShaking ? 'Tap untuk Berhenti & Ambil Ayat' : 'Kocok Ayat Hari Ini',
+                    _isShaking ? 'Bismillah, Ambil Sekarang' : 'Jemput Ibrah Hari Ini',
                     style: GoogleFonts.inter(
                         color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
@@ -741,7 +741,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           children: [
             CircularProgressIndicator(color: AppColors.emeraldIslamic),
             SizedBox(height: 16),
-            Text('Membuka gulungan kertas ayat...'),
+            Text('Membuka hikmah untukmu...'),
           ],
         ),
       ),
