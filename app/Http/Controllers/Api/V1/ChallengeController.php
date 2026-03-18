@@ -109,10 +109,11 @@ class ChallengeController extends Controller
 
         // Load challenges (even completed ones, so they stay in history if needed)
         // BUT only if user owns the license for that series
+        // Load all challenges for the active licenses (includes completed ones for reflections/history)
         $challenges = Challenge::where('user_id', $user->id)
             ->whereIn('series_id', $activeSeriesIds)
             ->with(['series', 'journalEntries.content'])
-            ->orderBy('is_completed', 'asc')
+            ->orderBy('is_completed', 'asc') // Active challenges first
             ->orderBy('updated_at', 'desc')
             ->get();
 
