@@ -34,8 +34,13 @@ class User extends Authenticatable
 
     // ── Role helpers ─────────────────────────────────────
     public function isSuperAdmin(): bool { return $this->role === 'super_admin'; }
-    public function isAdmin(): bool      { return in_array($this->role, ['admin', 'super_admin']); }
+    public function isAdmin(): bool      { return in_array($this->role, ['admin', 'super_admin']) || $this->is_admin; }
     public function canAccessAdmin(): bool { return $this->isAdmin(); }
+
+    // ── Permission helpers ───────────────────────────────
+    public function canManageLicenses(): bool { return $this->isSuperAdmin() || $this->can_manage_licenses; }
+    public function canManageContents(): bool { return $this->isSuperAdmin() || $this->can_manage_contents; }
+    public function canManageGuides(): bool   { return $this->isSuperAdmin() || $this->can_manage_guides; }
 
     // ── Relationships ─────────────────────────────────────
     public function licenses()   { return $this->hasMany(License::class, 'activated_by'); }

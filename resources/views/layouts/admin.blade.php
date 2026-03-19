@@ -42,7 +42,7 @@
             <div class="flex items-center space-x-6">
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.dashboard') ? 'text-amber-400' : '' }}">Dashboard</a>
                 
-                <!-- Monitoring Dropdown Submenu -->
+                <!-- Monitoring Dropdown Submenu (Visible to all admins) -->
                 <div class="relative group">
                     <button class="hover:text-amber-400 transition py-4 flex items-center space-x-1 {{ request()->routeIs('admin.monitoring.*') ? 'text-amber-400' : '' }}">
                         <span>Monitoring</span>
@@ -53,17 +53,31 @@
                             <a href="{{ route('admin.monitoring.challenges') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition">
                                 📊 Monitor Tantangan
                             </a>
+                            @if(auth()->user()->canManageLicenses())
                             <a href="{{ route('admin.monitoring.licenses') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition">
                                 🔑 Monitor License
                             </a>
+                            @endif
                         </div>
                     </div>
                 </div>
 
+                @if(auth()->user()->canManageLicenses())
                 <a href="{{ route('admin.licenses') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.licenses') ? 'text-amber-400' : '' }}">Licenses</a>
+                @endif
+
+                @if(auth()->user()->canManageContents())
                 <a href="{{ route('admin.contents.index') }}" class="hover:text-amber-400 transition">Contents</a>
+                @endif
+
+                @if(auth()->user()->canManageGuides())
                 <a href="{{ route('admin.manual-pages.index') }}" class="hover:text-amber-400 transition">Guides</a>
-                <a href="{{ route('admin.users.index') }}" class="hover:text-amber-400 transition">Users</a>
+                @endif
+
+                @if(auth()->user()->isSuperAdmin())
+                <a href="{{ route('admin.users.index') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.users.index') ? 'text-amber-400' : '' }}">Users</a>
+                @endif
+
                 <div class="h-6 w-px bg-emerald-800"></div>
                 <form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="text-sm opacity-80 hover:text-amber-400">Logout</button></form>
             </div>
