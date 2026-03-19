@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,58 +10,34 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'name',
-        'nickname',
-        'email',
-        'phone',
-        'password',
-        'google_id',
-        'facebook_id',
-        'avatar',
-        'is_admin',
+        'name', 'nickname', 'email', 'phone', 'password',
+        'google_id', 'facebook_id', 'avatar', 'is_admin',
+        'role', 'can_manage_licenses', 'can_manage_contents', 'can_manage_guides',
     ];
 
+    protected $hidden = ['password', 'remember_token'];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
+            'email_verified_at'   => 'datetime',
+            'password'            => 'hashed',
+            'is_admin'            => 'boolean',
+            'can_manage_licenses' => 'boolean',
+            'can_manage_contents' => 'boolean',
+            'can_manage_guides'   => 'boolean',
         ];
     }
 
-    public function licenses()
-    {
-        return $this->hasMany(License::class, 'activated_by');
-    }
+    // ── Role helpers ─────────────────────────────────────
+    public function isSuperAdmin(): bool { return $this->role === 'super_admin'; }
+    public function isAdmin(): bool      { return in_array($this->role, ['admin', 'super_admin']); }
+    public function canAccessAdmin(): bool { return $this->isAdmin(); }
 
-    public function challenges()
-    {
-        return $this->hasMany(Challenge::class);
-    }
+    // ── Relationships ─────────────────────────────────────
+    public function licenses()   { return $this->hasMany(License::class, 'activated_by'); }
+    public function challenges() { return $this->hasMany(Challenge::class); }
 }

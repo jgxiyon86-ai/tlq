@@ -12,15 +12,17 @@
         </div>
         
         <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto mt-6 md:mt-0 relative z-10">
-            <!-- Search Form -->
-            <form action="{{ route('admin.monitoring.challenges') }}" method="GET" class="relative group w-full sm:w-64">
-                <input type="text" name="q" value="{{ $searchQuery ?? '' }}" 
-                    placeholder="Cari Nama / Konten..." 
-                    class="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors">
+            <!-- AJAX Search -->
+            <div class="relative group w-full sm:w-72">
+                <input type="text" id="ajax-search" placeholder="Cari user aktif..." 
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium"
+                    oninput="searchUsers(this.value)">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" id="search-icon">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
-            </form>
+                <!-- Dropdown hasil pencarian -->
+                <div id="search-results" class="hidden absolute top-14 left-0 right-0 bg-white rounded-3xl shadow-2xl border border-gray-100 z-50 max-h-72 overflow-y-auto"></div>
+            </div>
 
             <div id="live-indicator" class="flex items-center bg-emerald-50 text-emerald-700 px-5 py-2.5 rounded-2xl text-[10px] font-black tracking-widest uppercase">
                 <span class="relative flex h-2 w-2 mr-3">
@@ -100,104 +102,139 @@
     @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- List: Tantangan Aktif -->
+        <!-- ── KIRI: User Aktif (AJAX Interactive) ───────────────────────────────────────── -->
         <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center justify-between mb-6">
                 <h3 class="text-xl font-black text-gray-800 flex items-center tracking-tight">
                     <div class="w-8 h-8 mr-3 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     User Aktif ({{ $activeChallengesList->total() }})
                 </h3>
+                <span class="text-[10px] text-gray-400 font-bold">klik user untuk lihat detail</span>
             </div>
-            
-            <div class="space-y-4">
+
+            <div class="space-y-3" id="user-list">
                 @forelse($activeChallengesList as $c)
-                <div class="flex items-center justify-between p-5 bg-gray-50/50 rounded-3xl hover:bg-white border border-transparent hover:border-emerald-100 transition shadow-sm hover:shadow-md group">
-                    <div class="flex items-center">
-                        <div class="relative">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:rotate-6 transition-transform" style="background-color: {{ optional($c->series)->color_hex ?? '#064E3B' }}">
-                                {{ strtoupper(substr(optional($c->series)->name ?? '?', 0, 1)) }}
+                <div class="rounded-3xl border border-gray-100 overflow-hidden" id="user-block-{{ $c->id }}">
+                    <!-- User Row (klik untuk load tantangan) -->
+                    <div class="flex items-center justify-between p-4 hover:bg-emerald-50/50 cursor-pointer transition group"
+                         onclick="toggleChallenges({{ $c->user->id ?? 0 }}, {{ $c->id }}, this)">
+                        <div class="flex items-center">
+                            <div class="relative">
+                                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white font-black text-sm shadow" 
+                                     style="background-color: {{ optional($c->series)->color_hex ?? '#064E3B' }}">
+                                    {{ strtoupper(substr(optional($c->user)->name ?? '?', 0, 1)) }}
+                                </div>
+                                <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
+                                    <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+                                </span>
                             </div>
-                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <div class="ml-3">
+                                <p class="font-black text-gray-800 text-sm">{{ optional($c->user)->name ?? '-' }}</p>
+                                <p class="text-[10px] text-gray-400 font-medium">{{ optional($c->user)->email ?? '-' }}</p>
                             </div>
                         </div>
-                        <div class="ml-4">
-                            <p class="font-black text-gray-800 text-sm">{{ optional($c->user)->name ?? 'User Tidak Dikenal' }}</p>
-                            <p class="text-[10px] font-bold text-gray-400 flex items-center space-x-2">
-                                <span class="flex items-center">
-                                    <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                    {{ optional($c->series)->name ?? 'Seri Tidak Ada' }}
-                                </span>
-                                <span class="opacity-30">|</span>
-                                <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-black tracking-tighter">{{ $c->total_days }} HARI</span>
-                                <span class="opacity-30">|</span>
-                                <span class="text-emerald-500/70">{{ optional($c->user)->email ?? '-' }}</span>
-                            </p>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                @if($c->is_completed)
+                                    <span class="text-[10px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-lg">SELESAI</span>
+                                @else
+                                    <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">HARI KE-{{ $c->current_day }}</span>
+                                    @php
+                                        $startDate = $c->started_at ?? $c->created_at;
+                                        $debt = $startDate ? max(0, min($c->total_days, $startDate->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1) - $c->current_day) : 0;
+                                    @endphp
+                                    @if($debt > 0)
+                                        <p class="text-[9px] font-black text-rose-500 text-right">{{ $debt }}H Tunggakan</p>
+                                    @endif
+                                @endif
+                                <p class="text-[9px] text-gray-300">{{ optional($c->series)->name }} • {{ $c->total_days }}H</p>
+                            </div>
+                            <!-- Expand icon -->
+                            <svg class="w-4 h-4 text-gray-300 transition-transform duration-300 expand-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="text-right">
-                            @if($c->is_completed)
-                                <p class="text-sm font-black text-gray-400 tracking-tighter">SUDAH SELESAI</p>
-                            @else
-                                <p class="text-sm font-black text-emerald-600 tracking-tighter">HARI KE-{{ $c->current_day }}</p>
-                                @php
-                                    $startDate = $c->started_at ?? $c->created_at;
-                                    if ($startDate) {
-                                        $targetDay = $startDate->copy()->startOfDay()->diffInDays(now()->startOfDay()) + 1;
-                                        $debt = max(0, min($c->total_days, $targetDay) - $c->current_day);
-                                    } else { $debt = 0; }
-                                @endphp
-                                @if($debt > 0)
-                                    <p class="text-[9px] font-black text-rose-500 tracking-tight uppercase">Tunggakan {{ $debt }} Hari</p>
-                                @endif
-                            @endif
-                            <p class="text-[10px] font-bold text-gray-400 italic">Mulai {{ $c->started_at ? $c->started_at->translatedFormat('d M') : ($c->created_at ? $c->created_at->translatedFormat('d M') : '-') }}</p>
+
+                    <!-- Challenges dropdown (hidden, loaded via AJAX) -->
+                    <div class="challenges-panel hidden bg-gray-50 border-t border-gray-100 px-4 py-3" id="challenges-{{ $c->user->id ?? 0 }}">
+                        <div class="loading-indicator text-center py-4">
+                            <div class="inline-block w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                            <p class="text-xs text-gray-400 mt-2">Memuat tantangan...</p>
                         </div>
-                        
-                        <form action="{{ route('admin.monitoring.challenges.destroy', $c->id) }}" method="POST" onsubmit="return confirm('Hapus paksa tantangan ini?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="p-2 text-gray-300 hover:text-rose-500 transition-colors">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </form>
                     </div>
                 </div>
                 @empty
-                <div class="py-24 text-center">
-                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                        <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <p class="text-gray-500 font-bold">Afwan, User belum ditemukan.</p>
+                <div class="py-16 text-center">
+                    <p class="text-gray-400 font-bold text-sm">Belum ada user aktif.</p>
                 </div>
                 @endforelse
             </div>
-            
-            <div class="mt-8 pt-6 border-t border-gray-50">
+
+            <div class="mt-6 pt-4 border-t border-gray-50">
                 {{ $activeChallengesList->links() }}
             </div>
         </div>
 
-        <!-- List: Jurnal Terbaru -->
-        <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between mb-8">
-                <h3 class="text-xl font-black text-gray-800 flex items-center tracking-tight">
+        <!-- ── KANAN: Panel Detail Journal (AJAX) + Tantangan Selesai ─────────────────── -->
+        <div class="space-y-8">
+
+            <!-- Journal Detail Panel (default kosong) -->
+            <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100" id="journal-panel">
+                <h3 class="text-xl font-black text-gray-800 flex items-center tracking-tight mb-6">
                     <div class="w-8 h-8 mr-3 bg-amber-500 rounded-xl flex items-center justify-center text-white">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"></path></svg>
                     </div>
-                    Jurnal Istiqomah ({{ $recentJournalEntries->total() }})
+                    <span id="journal-panel-title">Jurnal Istiqomah</span>
                 </h3>
-            </div>
-            
-            <div class="space-y-4">
-                @forelse($recentJournalEntries as $e)
-                <div class="flex items-start p-5 bg-gray-50/30 rounded-3xl border border-transparent hover:border-amber-100 hover:bg-white transition group">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                        <svg class="w-6 h-6 outline-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                <div id="journal-content">
+                    <div class="py-16 text-center">
+                        <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-amber-300">
+                            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                        </div>
+                        <p class="text-gray-400 font-bold text-sm">Pilih user, lalu pilih tantangan<br>untuk melihat jurnal istiqomah.</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Tantangan Selesai -->
+            <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                <h3 class="text-xl font-black text-gray-800 flex items-center tracking-tight mb-6">
+                    <div class="w-8 h-8 mr-3 bg-yellow-500 rounded-xl flex items-center justify-center text-white">
+                        🏆
+                    </div>
+                    Tantangan Selesai ({{ $completedChallengesList->total() }})
+                </h3>
+                <div class="space-y-3">
+                    @forelse($completedChallengesList as $c)
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-yellow-50/50 transition cursor-pointer"
+                         onclick="loadJournals({{ $c->id }}, '{{ addslashes(optional($c->user)->name) }} — {{ addslashes(optional($c->series)->name) }} (Selesai)')">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm" 
+                                 style="background:{{ optional($c->series)->color_hex ?? '#D97706' }}">
+                                {{ strtoupper(substr(optional($c->user)->name ?? '?', 0, 1)) }}
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-black text-gray-800 text-sm">{{ optional($c->user)->name ?? '-' }}</p>
+                                <p class="text-[10px] text-gray-400">{{ optional($c->series)->name }} • {{ $c->total_days }} Hari</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-black text-yellow-700 bg-yellow-100 px-2 py-1 rounded-lg">✅ KHATAM</span>
+                            <p class="text-[9px] text-gray-300 mt-1">{{ $c->updated_at->translatedFormat('d M Y') }}</p>
+                        </div>
+                    </div>
+                    @empty
+                    <p class="text-center text-gray-400 text-sm py-8">Belum ada tantangan selesai.</p>
+                    @endforelse
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-50">{{ $completedChallengesList->links() }}</div>
+            </div>
+        </div>
+    </div>
+
                     <div class="ml-5 flex-1">
                         <div class="flex justify-between items-start">
                             <div>
@@ -307,6 +344,130 @@
 </div>
 
 <script>
+    const AJAX_BASE = '{{ url("admin/ajax") }}';
+    const CSRF = '{{ csrf_token() }}';
+
+    // ── AJAX Search User ────────────────────────────────────────
+    let searchTimeout;
+    function searchUsers(q) {
+        clearTimeout(searchTimeout);
+        const box = document.getElementById('search-results');
+        if (!q.trim()) { box.classList.add('hidden'); return; }
+        box.classList.remove('hidden');
+        box.innerHTML = '<p class="text-xs text-gray-400 p-4">Mencari...</p>';
+        searchTimeout = setTimeout(async () => {
+            const res = await fetch(`${AJAX_BASE}/users/search?q=${encodeURIComponent(q)}`);
+            const users = (await res.json());
+            if (!users.length) {
+                box.innerHTML = '<p class="text-xs text-gray-400 p-4">User tidak ditemukan.</p>';
+                return;
+            }
+            box.innerHTML = users.map(u => `
+                <div class="px-4 py-3 hover:bg-emerald-50 cursor-pointer flex items-center gap-3 transition" onclick="loadUserChallenges(${u.id}, '${u.name.replace(/'/g,"&apos;")}')">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm">${u.name[0].toUpperCase()}</div>
+                    <div>
+                        <p class="font-bold text-sm text-gray-800">${u.name}</p>
+                        <p class="text-xs text-gray-400">${u.email} • ${u.challenges_count} tantangan</p>
+                    </div>
+                </div>`).join('');
+        }, 400);
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#ajax-search') && !e.target.closest('#search-results')) {
+            document.getElementById('search-results').classList.add('hidden');
+        }
+    });
+
+    // ── Toggle Challenges for a User ───────────────────────────
+    let loadedUsers = {};
+    function toggleChallenges(userId, blockId, el) {
+        const panel = document.getElementById(`challenges-${userId}`);
+        const icon  = el.querySelector('.expand-icon');
+        const isOpen = !panel.classList.contains('hidden');
+
+        if (isOpen) {
+            panel.classList.add('hidden');
+            icon.style.transform = '';
+            return;
+        }
+
+        panel.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+
+        if (loadedUsers[userId]) return; // already loaded
+        loadedUsers[userId] = true;
+        loadUserChallenges(userId, null, panel);
+    }
+
+    async function loadUserChallenges(userId, name, panelEl) {
+        if (!panelEl) {
+            // triggered from search — try to find or create a temp panel
+            panelEl = document.getElementById(`challenges-${userId}`);
+            if (!panelEl) {
+                // Scroll to journal panel and load directly
+                await loadJournals(null, name, userId);
+                return;
+            }
+            panelEl.classList.remove('hidden');
+        }
+        panelEl.innerHTML = `<div class="loading-indicator text-center py-4"><div class="inline-block w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div><p class="text-xs text-gray-400 mt-2">Memuat tantangan...</p></div>`;
+        const res = await fetch(`${AJAX_BASE}/users/${userId}/challenges`);
+        const data = await res.json();
+        if (!data.challenges.length) {
+            panelEl.innerHTML = '<p class="text-xs text-gray-400 py-4 text-center">Tidak ada tantangan.</p>';
+            return;
+        }
+        panelEl.innerHTML = data.challenges.map(c => `
+            <div class="flex items-center justify-between px-3 py-2.5 hover:bg-emerald-100/50 rounded-2xl cursor-pointer transition mb-1"
+                 onclick="loadJournals(${c.id}, '${(c.series?.name || 'Seri').replace(/'/g, "&apos;")} — Hari ${c.current_day}/${c.total_days}')">
+                <div>
+                    <p class="text-sm font-black text-gray-700">${c.series?.name || 'Seri'}</p>
+                    <p class="text-[10px] text-gray-400">${c.total_days} Hari • ${c.is_completed ? '✅ Selesai' : 'Hari ' + c.current_day}</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>`).join('');
+    }
+
+    // ── Load Journal Entries for a Challenge ───────────────────
+    async function loadJournals(challengeId, label) {
+        const panel  = document.getElementById('journal-panel');
+        const title  = document.getElementById('journal-panel-title');
+        const content= document.getElementById('journal-content');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        title.textContent = label || 'Jurnal Istiqomah';
+        content.innerHTML = `<div class="py-8 text-center"><div class="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div><p class="text-xs text-gray-400 mt-2">Memuat jurnal...</p></div>`;
+
+        const res  = await fetch(`${AJAX_BASE}/challenges/${challengeId}/journals`);
+        const data = await res.json();
+        if (!data.entries.length) {
+            content.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">Tidak ada jurnal.</p>';
+            return;
+        }
+        content.innerHTML = data.entries.map(e => {
+            const hasBefore = e.before_pesan;
+            const hasAfter  = e.after_berhasil;
+            const isDone    = e.is_completed;
+            return `<div class="border border-gray-100 rounded-2xl mb-3 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-3 cursor-pointer ${isDone ? 'bg-emerald-50' : 'bg-gray-50'}" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${isDone ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}">${e.day_number}</span>
+                        <div>
+                            <p class="text-xs font-black text-gray-700">${e.content?.surah_ayah || (isDone ? 'Hari '+e.day_number : 'Belum dijemput')}</p>
+                            <p class="text-[9px] text-gray-400">${hasBefore ? '🌅 Before ' : ''}${hasAfter ? '🌇 After' : ''}</p>
+                        </div>
+                    </div>
+                    <span class="text-[9px] font-black ${e.is_catch_up ? 'text-amber-600 bg-amber-100' : 'text-gray-400'} px-2 py-0.5 rounded">${e.is_catch_up ? 'KEJAR' : ''}</span>
+                </div>
+                <div class="hidden px-4 py-3 space-y-2 bg-white">
+                    ${e.content?.arabic_text ? `<p class="text-right font-amiri text-lg text-gray-800">${e.content.arabic_text}</p><p class="text-xs text-gray-500 italic">${e.content.translation || ''}</p>` : ''}
+                    ${hasBefore ? `<div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-black text-emerald-700 mb-1">🌅 BEFORE</p><p class="text-xs text-gray-700">${e.before_pesan}</p></div>` : ''}
+                    ${hasAfter  ? `<div class="bg-amber-50 rounded-xl p-3"><p class="text-[10px] font-black text-amber-700 mb-1">🌇 AFTER</p><p class="text-xs text-gray-700">${e.after_berhasil}</p></div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
     function openCreateModal() {
         document.getElementById('createModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';

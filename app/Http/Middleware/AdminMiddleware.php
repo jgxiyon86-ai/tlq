@@ -8,18 +8,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->is_admin) {
+        // Allow both 'admin' role and legacy is_admin=true users
+        if (auth()->check() && auth()->user()->canAccessAdmin()) {
             return $next($request);
         }
 
         auth()->logout();
-        return redirect()->route('login')->withErrors(['email' => 'Halaman ini hanya untuk Administrator.']);
+        return redirect()->route('login')
+            ->withErrors(['email' => 'Halaman ini hanya untuk Administrator.']);
     }
 }
