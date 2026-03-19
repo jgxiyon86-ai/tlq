@@ -101,9 +101,9 @@
                         <!-- Super Admin -->
                         <label class="relative cursor-pointer group">
                             <input type="radio" name="role" value="super_admin" class="peer hidden" id="r_super">
-                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition group">
-                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center peer-checked:border-emerald-500">
-                                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden peer-checked:block"></div>
+                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition">
+                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center peer-checked:border-emerald-500 bg-white">
+                                    <div class="w-3 h-3 bg-emerald-600 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm font-black text-gray-800">Super Admin (Ustadz Besar)</p>
@@ -115,9 +115,9 @@
                         <!-- Admin Tim -->
                         <label class="relative cursor-pointer group">
                             <input type="radio" name="role" value="admin" class="peer hidden" id="r_admin">
-                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition group">
-                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
-                                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden peer-checked:block"></div>
+                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition">
+                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center bg-white">
+                                    <div class="w-3 h-3 bg-emerald-600 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm font-black text-gray-800">Admin Tim (Petugas)</p>
@@ -129,9 +129,9 @@
                         <!-- Jemaah -->
                         <label class="relative cursor-pointer group">
                             <input type="radio" name="role" value="user" class="peer hidden" id="r_user">
-                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition group">
-                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
-                                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden peer-checked:block"></div>
+                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition">
+                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center bg-white">
+                                    <div class="w-3 h-3 bg-emerald-600 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm font-black text-gray-800">Jemaah (User Biasa)</p>
