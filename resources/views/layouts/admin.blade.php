@@ -50,9 +50,11 @@
                     </button>
                     <div class="absolute left-0 top-full w-48 hidden group-hover:block z-50 pt-1">
                         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fade-in">
+                            @if(auth()->user()->canMonitorChallenges())
                             <a href="{{ route('admin.monitoring.challenges') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition">
                                 📊 Monitor Tantangan
                             </a>
+                            @endif
                             @if(auth()->user()->canManageLicenses())
                             <a href="{{ route('admin.monitoring.licenses') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition">
                                 🔑 Monitor License
@@ -79,7 +81,29 @@
                 @endif
 
                 <div class="h-6 w-px bg-emerald-800"></div>
-                <form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="text-sm opacity-80 hover:text-amber-400">Logout</button></form>
+                
+                <div class="group relative py-4">
+                    <button class="flex items-center space-x-2 text-sm opacity-80 hover:text-amber-400 hover:opacity-100 transition">
+                        <div class="w-6 h-6 rounded-full bg-amber-400 text-emerald-900 flex items-center justify-center font-black text-[10px]">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        </div>
+                        <span>Profil</span>
+                    </button>
+                    <div class="absolute right-0 top-full w-48 hidden group-hover:block z-50 pt-1">
+                        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fade-in text-gray-700">
+                            <a href="{{ route('admin.profile.password') }}" class="block px-4 py-2 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-600 transition">
+                                🔑 Ganti Password
+                            </a>
+                            <hr class="my-1 border-gray-50">
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full text-left px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 transition">
+                                    🚪 Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>

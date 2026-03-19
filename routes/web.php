@@ -29,6 +29,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Monitoring & Licenses
     Route::get('/monitoring/licenses',    [AdminController::class, 'monitoringLicenses'])->name('monitoring.licenses');
+    Route::get('/profile/password',       [AdminController::class, 'profilePassword'])->name('profile.password');
+    Route::post('/profile/password',      [AdminController::class, 'updateProfilePassword'])->name('profile.password.update');
     Route::get('/licenses',               [AdminController::class, 'licenses'])->name('licenses');
     Route::post('/licenses/generate',     [AdminController::class, 'generateLicenses'])->name('licenses.generate');
     Route::get('/licenses/print/{id}',    [AdminController::class, 'printLicense'])->name('licenses.print');

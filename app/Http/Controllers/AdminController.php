@@ -162,6 +162,7 @@ class AdminController extends Controller
     // ── AJAX: Search active users ─────────────────────────────────────────────
     public function searchUsers(Request $request)
     {
+        if (!auth()->user()->canMonitorChallenges()) return response()->json([]);
         $q = $request->input('q', '');
         $users = User::where('name', 'like', "%{$q}%")
             ->orWhere('email', 'like', "%{$q}%")
@@ -310,6 +311,24 @@ class AdminController extends Controller
         return view('admin.users.index', compact('users', 'q'));
     }
 
+    public function profilePassword()
+    {
+        return view('admin.profile.password');
+    }
+
+    public function updateProfilePassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        auth()->user()->update([
+            'password' => \Hash::make($request->password)
+        ]);
+
+        return back()->with('success', 'Alhamdulillah, password antum berhasil diubah.');
+    }
+
     public function promoteAdmin(Request $request, User $user)
     {
         $this->requireSuperAdmin();
@@ -318,6 +337,7 @@ class AdminController extends Controller
             'can_manage_licenses'  => 'boolean',
             'can_manage_contents'  => 'boolean',
             'can_manage_guides'    => 'boolean',
+            'can_monitor_challenges' => 'boolean',
         ]);
 
         $user->update([
@@ -326,6 +346,7 @@ class AdminController extends Controller
             'can_manage_licenses'  => $request->boolean('can_manage_licenses'),
             'can_manage_contents'  => $request->boolean('can_manage_contents'),
             'can_manage_guides'    => $request->boolean('can_manage_guides'),
+            'can_monitor_challenges' => $request->boolean('can_monitor_challenges'),
         ]);
 
         return back()->with('success', "Role {$user->name} telah diperbarui.");

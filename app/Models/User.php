@@ -39,6 +39,7 @@ class User extends Authenticatable
 
     // ── Permission helpers ───────────────────────────────
     public function canManageLicenses(): bool { return $this->isSuperAdmin() || $this->can_manage_licenses; }
+    public function canMonitorChallenges(): bool { return $this->isSuperAdmin() || $this->can_monitor_challenges; }
     public function canManageContents(): bool { return $this->isSuperAdmin() || $this->can_manage_contents; }
     public function canManageGuides(): bool   { return $this->isSuperAdmin() || $this->can_manage_guides; }
 

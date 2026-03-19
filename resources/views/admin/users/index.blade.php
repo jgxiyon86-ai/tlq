@@ -55,10 +55,11 @@
                             @if($u->role === 'super_admin')
                                 <span class="bg-gray-800 text-white text-[9px] px-2 py-0.5 rounded-lg opacity-30">Akses Penuh</span>
                             @else
+                                @if($u->can_monitor_challenges) <span class="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-lg border border-emerald-200">Monitoring</span> @endif
                                 @if($u->can_manage_licenses) <span class="bg-amber-100 text-amber-700 text-[9px] font-black px-2 py-0.5 rounded-lg border border-amber-200">Licenses</span> @endif
                                 @if($u->can_manage_contents) <span class="bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-0.5 rounded-lg border border-blue-200">Contents</span> @endif
                                 @if($u->can_manage_guides) <span class="bg-purple-100 text-purple-700 text-[9px] font-black px-2 py-0.5 rounded-lg border border-purple-200">Guides</span> @endif
-                                @if(!$u->can_manage_licenses && !$u->can_manage_contents && !$u->can_manage_guides)
+                                @if(!$u->can_monitor_challenges && !$u->can_manage_licenses && !$u->can_manage_contents && !$u->can_manage_guides)
                                     <span class="text-[9px] text-gray-300 italic">No special access</span>
                                 @endif
                             @endif
@@ -145,6 +146,13 @@
                 <div id="permissionsPanel" class="pt-2 border-t border-gray-100">
                     <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Hak Akses Khusus (Admin Tim)</label>
                     <div class="space-y-3">
+                        <label class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-emerald-50 group transition">
+                            <div class="flex items-center mr-2">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 font-bold">📊</div>
+                                <span class="text-xs font-bold text-gray-700">Monitor Tantangan</span>
+                            </div>
+                            <input type="checkbox" name="can_monitor_challenges" value="1" class="w-5 h-5 text-emerald-600 border-gray-300 rounded-lg focus:ring-emerald-500">
+                        </label>
                         <label class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-amber-50 group transition">
                             <div class="flex items-center mr-2">
                                 <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mr-3 font-bold">🔑</div>
@@ -220,6 +228,7 @@
         if (rad) rad.checked = true;
         
         // Check permissions
+        document.querySelector('input[name="can_monitor_challenges"]').checked = user.can_monitor_challenges == 1;
         document.querySelector('input[name="can_manage_licenses"]').checked = user.can_manage_licenses == 1;
         document.querySelector('input[name="can_manage_contents"]').checked = user.can_manage_contents == 1;
         document.querySelector('input[name="can_manage_guides"]').checked = user.can_manage_guides == 1;
