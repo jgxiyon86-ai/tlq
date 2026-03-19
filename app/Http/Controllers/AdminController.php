@@ -329,6 +329,26 @@ class AdminController extends Controller
         return back()->with('success', 'Alhamdulillah, password antum berhasil diubah.');
     }
 
+    public function securityLogs()
+    {
+        $this->requireSuperAdmin();
+        $logs = \DB::table('login_attempts')->latest()->paginate(20);
+        $blockedUsers = User::where('is_blocked', true)->get();
+        
+        return view('admin.security.logs', compact('logs', 'blockedUsers'));
+    }
+
+    public function unblockUser(User $user)
+    {
+        $this->requireSuperAdmin();
+        $user->update([
+           'is_blocked' => false,
+           'failed_login_count' => 0
+        ]);
+        
+        return back()->with('success', "Alhamdulillah, akun {$user->name} berhasil dipulihkan.");
+    }
+
     public function promoteAdmin(Request $request, User $user)
     {
         $this->requireSuperAdmin();

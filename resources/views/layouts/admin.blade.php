@@ -42,7 +42,8 @@
             <div class="flex items-center space-x-6">
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.dashboard') ? 'text-amber-400' : '' }}">Dashboard</a>
                 
-                <!-- Monitoring Dropdown Submenu (Visible to all admins) -->
+                <!-- Monitoring Dropdown Submenu (Visible only if has perms) -->
+                @if(auth()->user()->canMonitorChallenges() || auth()->user()->canManageLicenses())
                 <div class="relative group">
                     <button class="hover:text-amber-400 transition py-4 flex items-center space-x-1 {{ request()->routeIs('admin.monitoring.*') ? 'text-amber-400' : '' }}">
                         <span>Monitoring</span>
@@ -63,6 +64,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 @if(auth()->user()->canManageLicenses())
                 <a href="{{ route('admin.licenses') }}" class="hover:text-amber-400 transition {{ request()->routeIs('admin.licenses') ? 'text-amber-400' : '' }}">Licenses</a>
@@ -91,9 +93,11 @@
                     </button>
                     <div class="absolute right-0 top-full w-48 hidden group-hover:block z-50 pt-1">
                         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fade-in text-gray-700">
-                            <a href="{{ route('admin.profile.password') }}" class="block px-4 py-2 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-600 transition">
-                                🔑 Ganti Password
+                            @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('admin.security.logs') }}" class="block px-4 py-2 text-xs font-bold hover:bg-rose-50 hover:text-rose-600 transition">
+                                🛡️ Audit Keamanan
                             </a>
+                            @endif
                             <hr class="my-1 border-gray-50">
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf

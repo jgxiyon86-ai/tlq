@@ -40,8 +40,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('contents', ContentController::class);
     Route::resource('manual-pages', ManualPageController::class);
 
-    // User Management (enforced super_admin in controller)
+    // User Management & Security (enforced super_admin in controller)
     Route::get('/users',                  [AdminController::class, 'users'])->name('users.index');
+    Route::post('/users/{user}/promote',  [AdminController::class, 'promoteAdmin'])->name('users.promote');
+    Route::post('/users/{user}/password', [AdminController::class, 'updateUserPassword'])->name('users.updatePassword');
+    Route::post('/users/{user}/unblock',  [AdminController::class, 'unblockUser'])->name('users.unblock');
+    Route::get('/security/logs',          [AdminController::class, 'securityLogs'])->name('security.logs');
     Route::get('/users/{user}',           [UserController::class,  'show'])->name('users.show');
     Route::post('/users/{user}/promote',  [AdminController::class, 'promoteAdmin'])->name('users.promote');
     Route::post('/users/{user}/password', [AdminController::class, 'updateUserPassword'])->name('users.password');
