@@ -98,34 +98,45 @@
                 <div>
                     <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Tingkatan Akun</label>
                     <div class="grid grid-cols-1 gap-3">
-                        <label class="flex items-center p-4 bg-gray-50 rounded-2xl cursor-pointer border-2 border-transparent peer-checked:border-emerald-500 hover:bg-emerald-50 transition group">
+                        <!-- Super Admin -->
+                        <label class="relative cursor-pointer group">
                             <input type="radio" name="role" value="super_admin" class="peer hidden" id="r_super">
-                            <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 group-hover:border-emerald-500 flex items-center justify-center">
-                                <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden"></div>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-black text-gray-800">Super Admin (Ustadz Besar)</p>
-                                <p class="text-[10px] text-gray-400">Akses penuh ke semua fitur data dan user.</p>
+                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition group">
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center peer-checked:border-emerald-500">
+                                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden peer-checked:block"></div>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-black text-gray-800">Super Admin (Ustadz Besar)</p>
+                                    <p class="text-[10px] text-gray-400">Akses penuh ke semua fitur data dan user.</p>
+                                </div>
                             </div>
                         </label>
-                        <label class="flex items-center p-4 bg-gray-50 rounded-2xl cursor-pointer border-2 border-transparent hover:bg-emerald-50 transition group">
+                        
+                        <!-- Admin Tim -->
+                        <label class="relative cursor-pointer group">
                             <input type="radio" name="role" value="admin" class="peer hidden" id="r_admin">
-                            <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
-                                <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden"></div>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-black text-gray-800">Admin Tim (Petugas)</p>
-                                <p class="text-[10px] text-gray-400">Bisa masuk dashboard, hak khusus klik di bawah.</p>
+                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition group">
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
+                                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden peer-checked:block"></div>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-black text-gray-800">Admin Tim (Petugas)</p>
+                                    <p class="text-[10px] text-gray-400">Bisa masuk dashboard, hak khusus klik di bawah.</p>
+                                </div>
                             </div>
                         </label>
-                        <label class="flex items-center p-4 bg-gray-50 rounded-2xl cursor-pointer border-2 border-transparent hover:bg-emerald-50 transition group">
+
+                        <!-- Jemaah -->
+                        <label class="relative cursor-pointer group">
                             <input type="radio" name="role" value="user" class="peer hidden" id="r_user">
-                            <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
-                                <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden"></div>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-black text-gray-800">Jemaah (User Biasa)</p>
-                                <p class="text-[10px] text-gray-400">Hanya bisa akses lewat aplikasi Android.</p>
+                            <div class="flex items-center p-4 bg-gray-50 rounded-2xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition group">
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
+                                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full hidden peer-checked:block"></div>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-black text-gray-800">Jemaah (User Biasa)</p>
+                                    <p class="text-[10px] text-gray-400">Hanya bisa akses lewat aplikasi Android.</p>
+                                </div>
                             </div>
                         </label>
                     </div>
