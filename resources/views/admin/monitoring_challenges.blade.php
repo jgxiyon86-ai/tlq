@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <!-- 1. Stats Summary (Islamic Tone Cards) -->
+    <!-- Stats Summary -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-2xl shadow-emerald-200/50 relative overflow-hidden group">
             <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
@@ -62,8 +62,8 @@
                 </div>
                 <span class="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">MASYAALLAH</span>
             </div>
-            <p class="text-gray-400 text-xs mt-6 font-bold uppercase tracking-[0.2em]">Jurnal Terukir</p>
-            <h4 class="text-4xl font-black mt-1 text-gray-900">{{ number_format($recentJournalEntries->total()) }}</h4>
+            <p class="text-gray-400 text-xs mt-6 font-bold uppercase tracking-[0.2em]">Tantangan Selesai</p>
+            <h4 class="text-4xl font-black mt-1 text-gray-900">{{ number_format($completedChallengesList->total()) }}</h4>
         </div>
 
         <div class="bg-white rounded-[2rem] p-7 border border-gray-100 shadow-sm hover:shadow-md transition">
@@ -71,12 +71,10 @@
                 <div class="p-2.5 bg-blue-50 rounded-2xl text-blue-600">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
-                <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-tighter">Dalam Usaha</span>
-                </div>
+                <span class="text-[10px] font-black text-blue-600 uppercase tracking-tighter">Dalam Usaha</span>
             </div>
             <p class="text-gray-400 text-xs mt-6 font-bold uppercase tracking-[0.2em]">Istiqomah (5m)</p>
-            <h4 class="text-4xl font-black mt-1 text-gray-900">{{ number_format($liveUsersCount) }} <span class="text-sm font-normal text-gray-400">Jiwa</span></h4>
+            <h4 class="text-4xl font-black mt-1 text-gray-900">{{ number_format($liveUsersCount) }}</h4>
         </div>
 
         <div class="bg-white rounded-[2rem] p-7 border border-gray-100 shadow-sm hover:shadow-md transition">
@@ -84,22 +82,12 @@
                 <div class="p-2.5 bg-rose-50 rounded-2xl text-rose-600">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-                <span class="text-[10px] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full tracking-widest">BUTUH SAPAAN</span>
+                <span class="text-[10px] font-black text-rose-600 uppercase tracking-tighter">Butuh Atensi</span>
             </div>
-            <p class="text-gray-400 text-xs mt-6 font-bold uppercase tracking-[0.2em]">Berhenti > 3 Hari</p>
+            <p class="text-gray-400 text-xs mt-6 font-bold uppercase tracking-[0.2em]">Anomali (3 Hari)</p>
             <h4 class="text-4xl font-black mt-1 text-gray-900">{{ number_format($anomaliesCount) }}</h4>
         </div>
     </div>
-
-    @if($searchQuery)
-    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
-        <p class="text-emerald-800 text-sm font-medium">
-            <span class="font-black italic">Hasil Pencarian:</span> "{{ $searchQuery }}" 
-            <span class="ml-2 opacity-60">(Ditemukan {{ $activeChallengesList->total() }} Tantangan & {{ $recentJournalEntries->total() }} Jurnal)</span>
-        </p>
-        <a href="{{ route('admin.monitoring.challenges') }}" class="text-xs font-black text-emerald-600 hover:underline">RESET FILTER</a>
-    </div>
-    @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- ── KIRI: User Aktif (AJAX Interactive) ───────────────────────────────────────── -->
@@ -151,14 +139,10 @@
                                 @endif
                                 <p class="text-[9px] text-gray-300">{{ optional($c->series)->name }} • {{ $c->total_days }}H</p>
                             </div>
-                            <!-- Expand icon -->
-                            <svg class="w-4 h-4 text-gray-300 transition-transform duration-300 expand-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                            <svg class="w-4 h-4 text-gray-300 transition-transform duration-300 expand-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </div>
                     </div>
 
-                    <!-- Challenges dropdown (hidden, loaded via AJAX) -->
                     <div class="challenges-panel hidden bg-gray-50 border-t border-gray-100 px-4 py-3" id="challenges-{{ $c->user->id ?? 0 }}">
                         <div class="loading-indicator text-center py-4">
                             <div class="inline-block w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
@@ -180,8 +164,6 @@
 
         <!-- ── KANAN: Panel Detail Journal (AJAX) + Tantangan Selesai ─────────────────── -->
         <div class="space-y-8">
-
-            <!-- Journal Detail Panel (default kosong) -->
             <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100" id="journal-panel">
                 <h3 class="text-xl font-black text-gray-800 flex items-center tracking-tight mb-6">
                     <div class="w-8 h-8 mr-3 bg-amber-500 rounded-xl flex items-center justify-center text-white">
@@ -199,12 +181,9 @@
                 </div>
             </div>
 
-            <!-- Tantangan Selesai -->
             <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
                 <h3 class="text-xl font-black text-gray-800 flex items-center tracking-tight mb-6">
-                    <div class="w-8 h-8 mr-3 bg-yellow-500 rounded-xl flex items-center justify-center text-white">
-                        🏆
-                    </div>
+                    <div class="w-8 h-8 mr-3 bg-yellow-500 rounded-xl flex items-center justify-center text-white">🏆</div>
                     Tantangan Selesai ({{ $completedChallengesList->total() }})
                 </h3>
                 <div class="space-y-3">
@@ -231,46 +210,6 @@
                     @endforelse
                 </div>
                 <div class="mt-4 pt-4 border-t border-gray-50">{{ $completedChallengesList->links() }}</div>
-            </div>
-        </div>
-    </div>
-
-                    <div class="ml-5 flex-1">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-black text-gray-800 text-sm tracking-tight capitalize">{{ optional($e->user)->name ?? 'User' }}</p>
-                                <p class="text-[10px] font-black {{ $e->content ? 'text-emerald-600' : 'text-gray-400' }} mt-0.5 tracking-widest">
-                                    {{ optional($e->content)->surah_ayah ?? 'BELUM DIKOCOK' }}
-                                </p>
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <span class="text-[10px] font-black text-amber-700 px-3 py-1 bg-amber-100 rounded-full mb-1">HARI {{ $e->day_number }}</span>
-                                @if($e->is_catch_up)
-                                    <span class="text-[8px] font-black text-rose-600 flex items-center bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100 uppercase tracking-widest">
-                                        <svg class="w-2.5 h-2.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3V1L8 11h2v8l3-10h-2V3z"></path></svg>
-                                        Akselerasi
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2 line-clamp-2 italic leading-relaxed">
-                            "{{ $e->insight_text ?? (optional($e->content)->translation_text ?? 'Menunggu ayat terekam...') }}"
-                        </p>
-                        <div class="flex items-center mt-3 pt-3 border-t border-gray-100/50">
-                            <svg class="w-3 h-3 text-gray-300 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-[0.1em]">{{ $e->updated_at->diffForHumans() }}</p>
-                        </div>
-                    </div>
-                </div>
-                @empty
-                <div class="text-center py-24">
-                    <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Belum ada aktivitas terekam.</p>
-                </div>
-                @endforelse
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-gray-50">
-                {{ $recentJournalEntries->links() }}
             </div>
         </div>
     </div>
@@ -334,9 +273,6 @@
                     <button type="submit" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 uppercase text-[10px] tracking-[0.2em]">
                         Konfirmasi & Mulai Takdir
                     </button>
-                    <p class="text-[9px] text-gray-400 text-center mt-3 font-medium">
-                        Catatan: Menghidupkan tantangan baru akan menghapus tantangan aktif <br> user tersebut pada seri yang sama (Bypass Mode).
-                    </p>
                 </div>
             </form>
         </div>
@@ -345,9 +281,7 @@
 
 <script>
     const AJAX_BASE = '{{ url("admin/ajax") }}';
-    const CSRF = '{{ csrf_token() }}';
-
-    // ── AJAX Search User ────────────────────────────────────────
+    
     let searchTimeout;
     function searchUsers(q) {
         clearTimeout(searchTimeout);
@@ -367,7 +301,7 @@
                     <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm">${u.name[0].toUpperCase()}</div>
                     <div>
                         <p class="font-bold text-sm text-gray-800">${u.name}</p>
-                        <p class="text-xs text-gray-400">${u.email} • ${u.challenges_count} tantangan</p>
+                        <p class="text-xs text-gray-400">${u.email}</p>
                     </div>
                 </div>`).join('');
         }, 400);
@@ -379,127 +313,64 @@
         }
     });
 
-    // ── Toggle Challenges for a User ───────────────────────────
     let loadedUsers = {};
     function toggleChallenges(userId, blockId, el) {
         const panel = document.getElementById(`challenges-${userId}`);
         const icon  = el.querySelector('.expand-icon');
         const isOpen = !panel.classList.contains('hidden');
-
-        if (isOpen) {
-            panel.classList.add('hidden');
-            icon.style.transform = '';
-            return;
-        }
-
+        if (isOpen) { panel.classList.add('hidden'); icon.style.transform = ''; return; }
         panel.classList.remove('hidden');
         icon.style.transform = 'rotate(180deg)';
-
-        if (loadedUsers[userId]) return; // already loaded
+        if (loadedUsers[userId]) return;
         loadedUsers[userId] = true;
         loadUserChallenges(userId, null, panel);
     }
 
     async function loadUserChallenges(userId, name, panelEl) {
         if (!panelEl) {
-            // triggered from search — try to find or create a temp panel
             panelEl = document.getElementById(`challenges-${userId}`);
-            if (!panelEl) {
-                // Scroll to journal panel and load directly
-                await loadJournals(null, name, userId);
-                return;
-            }
+            if (!panelEl) return;
             panelEl.classList.remove('hidden');
         }
-        panelEl.innerHTML = `<div class="loading-indicator text-center py-4"><div class="inline-block w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div><p class="text-xs text-gray-400 mt-2">Memuat tantangan...</p></div>`;
+        panelEl.innerHTML = `<div class="loading-indicator text-center py-4"><div class="inline-block w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>`;
         const res = await fetch(`${AJAX_BASE}/users/${userId}/challenges`);
         const data = await res.json();
-        if (!data.challenges.length) {
-            panelEl.innerHTML = '<p class="text-xs text-gray-400 py-4 text-center">Tidak ada tantangan.</p>';
-            return;
-        }
         panelEl.innerHTML = data.challenges.map(c => `
-            <div class="flex items-center justify-between px-3 py-2.5 hover:bg-emerald-100/50 rounded-2xl cursor-pointer transition mb-1"
-                 onclick="loadJournals(${c.id}, '${(c.series?.name || 'Seri').replace(/'/g, "&apos;")} — Hari ${c.current_day}/${c.total_days}')">
-                <div>
-                    <p class="text-sm font-black text-gray-700">${c.series?.name || 'Seri'}</p>
-                    <p class="text-[10px] text-gray-400">${c.total_days} Hari • ${c.is_completed ? '✅ Selesai' : 'Hari ' + c.current_day}</p>
-                </div>
-                <svg class="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <div class="flex items-center justify-between px-3 py-2 hover:bg-emerald-100 rounded-xl cursor-pointer transition mb-1"
+                 onclick="loadJournals(${c.id}, '${c.series?.name || 'Seri'} - Hari ${c.current_day}')">
+                <p class="text-xs font-bold text-gray-700">${c.series?.name || 'Seri'}</p>
+                <p class="text-[10px] text-gray-400">Hari ${c.current_day}/${c.total_days}</p>
             </div>`).join('');
     }
 
-    // ── Load Journal Entries for a Challenge ───────────────────
     async function loadJournals(challengeId, label) {
-        const panel  = document.getElementById('journal-panel');
         const title  = document.getElementById('journal-panel-title');
         const content= document.getElementById('journal-content');
-        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        title.textContent = label || 'Jurnal Istiqomah';
-        content.innerHTML = `<div class="py-8 text-center"><div class="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div><p class="text-xs text-gray-400 mt-2">Memuat jurnal...</p></div>`;
-
+        title.textContent = label;
+        content.innerHTML = `<div class="py-8 text-center animate-spin">⌛</div>`;
         const res  = await fetch(`${AJAX_BASE}/challenges/${challengeId}/journals`);
         const data = await res.json();
-        if (!data.entries.length) {
-            content.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">Tidak ada jurnal.</p>';
-            return;
-        }
-        content.innerHTML = data.entries.map(e => {
-            const hasBefore = e.before_pesan;
-            const hasAfter  = e.after_berhasil;
-            const isDone    = e.is_completed;
-            return `<div class="border border-gray-100 rounded-2xl mb-3 overflow-hidden">
-                <div class="flex items-center justify-between px-4 py-3 cursor-pointer ${isDone ? 'bg-emerald-50' : 'bg-gray-50'}" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${isDone ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}">${e.day_number}</span>
-                        <div>
-                            <p class="text-xs font-black text-gray-700">${e.content?.surah_ayah || (isDone ? 'Hari '+e.day_number : 'Belum dijemput')}</p>
-                            <p class="text-[9px] text-gray-400">${hasBefore ? '🌅 Before ' : ''}${hasAfter ? '🌇 After' : ''}</p>
-                        </div>
-                    </div>
-                    <span class="text-[9px] font-black ${e.is_catch_up ? 'text-amber-600 bg-amber-100' : 'text-gray-400'} px-2 py-0.5 rounded">${e.is_catch_up ? 'KEJAR' : ''}</span>
+        content.innerHTML = data.entries.map(e => `
+            <div class="border border-gray-100 rounded-2xl mb-3 overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <span class="text-xs font-black">HARI ${e.day_number} - ${e.content?.surah_ayah || 'Belum'}</span>
+                    <span class="text-[9px] font-bold text-gray-400">${e.is_completed ? '✅' : '⏳'}</span>
                 </div>
-                <div class="hidden px-4 py-3 space-y-2 bg-white">
-                    ${e.content?.arabic_text ? `<p class="text-right font-amiri text-lg text-gray-800">${e.content.arabic_text}</p><p class="text-xs text-gray-500 italic">${e.content.translation || ''}</p>` : ''}
-                    ${hasBefore ? `<div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-black text-emerald-700 mb-1">🌅 BEFORE</p><p class="text-xs text-gray-700">${e.before_pesan}</p></div>` : ''}
-                    ${hasAfter  ? `<div class="bg-amber-50 rounded-xl p-3"><p class="text-[10px] font-black text-amber-700 mb-1">🌇 AFTER</p><p class="text-xs text-gray-700">${e.after_berhasil}</p></div>` : ''}
+                <div class="hidden px-4 py-3 bg-white text-xs space-y-2">
+                    ${e.before_pesan ? `<p class="text-emerald-600 font-bold">🌅 ${e.before_pesan}</p>` : ''}
+                    ${e.after_berhasil ? `<p class="text-amber-600 font-bold">🌇 ${e.after_berhasil}</p>` : ''}
                 </div>
-            </div>`;
-        }).join('');
+            </div>`).join('');
     }
 
-    function openCreateModal() {
-        document.getElementById('createModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeCreateModal() {
-        document.getElementById('createModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
+    function openCreateModal() { document.getElementById('createModal').classList.remove('hidden'); }
+    function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
 </script>
 
 <style>
-/* Animasi halus untuk pagination */
-.pagination { @apply flex space-x-2; }
-.page-item { @apply rounded-xl overflow-hidden shadow-sm; }
-.page-link { @apply !px-4 !py-2 !bg-white !border-gray-100 !text-gray-600 !font-black !text-xs hover:!bg-emerald-50 hover:!text-emerald-600 transition-colors; }
-.active .page-link { @apply !bg-emerald-600 !text-white !border-emerald-600; }
+    .pagination { @apply flex space-x-2; }
+    .page-item { @apply rounded-xl overflow-hidden; }
+    .page-link { @apply !px-3 !py-1 !text-xs !font-bold hover:!bg-emerald-50; }
+    .active .page-link { @apply !bg-emerald-600 !text-white; }
 </style>
-
-@if(session('success'))
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    Swal.fire({
-        title: 'Barakallah!',
-        text: "{{ session('success') }}",
-        icon: 'success',
-        confirmButtonText: 'Alhamdulillah',
-        confirmButtonColor: '#059669',
-        customClass: {
-            popup: 'rounded-[2rem]',
-            confirmButton: 'rounded-xl px-8 font-black uppercase text-xs tracking-widest'
-        }
-    });
-</script>
-@endif
 @endsection
