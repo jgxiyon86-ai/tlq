@@ -93,11 +93,17 @@
                     </button>
                     <div class="absolute right-0 top-full w-48 hidden group-hover:block z-50 pt-1">
                         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fade-in text-gray-700">
+                            <a href="{{ route('admin.profile.password') }}" class="block px-4 py-2 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-600 transition">
+                                🔑 Ganti Password
+                            </a>
+                            
                             @if(auth()->user()->isSuperAdmin())
+                            <hr class="my-1 border-gray-50">
                             <a href="{{ route('admin.security.logs') }}" class="block px-4 py-2 text-xs font-bold hover:bg-rose-50 hover:text-rose-600 transition">
                                 🛡️ Audit Keamanan
                             </a>
                             @endif
+                            
                             <hr class="my-1 border-gray-50">
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
