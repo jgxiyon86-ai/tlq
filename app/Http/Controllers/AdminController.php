@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
 use App\Models\Series;
 use App\Models\License;
 use App\Models\User;
 use App\Models\Challenge;
 use App\Models\JournalEntry;
+use App\Models\ManualPage;
+use App\Models\AdminActivityLog;
 use App\Models\LicenseTransferRequest;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -325,6 +326,8 @@ class AdminController extends Controller
         auth()->user()->update([
             'password' => \Hash::make($request->password)
         ]);
+        
+        AdminActivityLog::log('SELF_PASSWORD_CHANGE');
 
         return back()->with('success', 'Alhamdulillah, password antum berhasil diubah.');
     }
@@ -346,12 +349,17 @@ class AdminController extends Controller
            'failed_login_count' => 0
         ]);
         
+        AdminActivityLog::log('UNBLOCK_USER', $user);
+
         return back()->with('success', "Alhamdulillah, akun {$user->name} berhasil dipulihkan.");
     }
 
     public function promoteAdmin(Request $request, User $user)
     {
         $this->requireSuperAdmin();
+        
+        $old_data = $user->only(['role', 'is_admin', 'can_manage_licenses', 'can_manage_contents', 'can_manage_guides', 'can_monitor_challenges']);
+
         $request->validate([
             'role'                 => 'required|in:admin,super_admin,user',
             'can_manage_licenses'  => 'boolean',
@@ -369,6 +377,8 @@ class AdminController extends Controller
             'can_monitor_challenges' => $request->boolean('can_monitor_challenges'),
         ]);
 
+        AdminActivityLog::log('UPDATE_USER_ROLE', $user, $old_data, $user->only(['role', 'is_admin', 'can_manage_licenses', 'can_manage_contents', 'can_manage_guides', 'can_monitor_challenges']));
+
         return back()->with('success', "Role {$user->name} telah diperbarui.");
     }
 
@@ -377,6 +387,9 @@ class AdminController extends Controller
         $this->requireSuperAdmin();
         $request->validate(['password' => 'required|min:8|confirmed']);
         $user->update(['password' => Hash::make($request->password)]);
+        
+        AdminActivityLog::log('RESET_USER_PASSWORD', $user);
+        
         return back()->with('success', "Password {$user->name} berhasil diubah.");
     }
 
