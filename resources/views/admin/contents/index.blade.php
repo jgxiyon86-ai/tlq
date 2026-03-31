@@ -46,6 +46,7 @@
         <table class="w-full text-left">
             <thead>
                 <tr class="text-xs uppercase text-gray-400 border-b border-gray-50">
+                    <th class="py-4 font-medium w-10">#</th>
                     <th class="py-4 font-medium">Series</th>
                     <th class="py-4 font-medium">Ayat</th>
                     <th class="py-4 font-medium">Insight Preview</th>

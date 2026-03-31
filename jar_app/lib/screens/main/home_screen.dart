@@ -362,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFBEF),
+                      Color(0x000ffbef),
                       Color(0xFFFC8B8B),
                       Color(0xFF90EE90),
                       Color(0xFF87CEEB),
@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tantangan $seriesName (${totalDays} Hari)',
+                    Text('Tantangan $seriesName ($totalDays Hari)',
                         style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 4),

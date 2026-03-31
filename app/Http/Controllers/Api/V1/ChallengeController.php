@@ -136,12 +136,6 @@ class ChallengeController extends Controller
                 }
             }
 
-            $c->today_entry = $entry ? $entry->load('content') : null;
-            
-            // We NO LONGER override current_day display here.
-            // current_day must reflect the ACTUAL progress level from DB.
-            // The calendar lag will be shown via 'debt_days'.
-
             // DISCIPLINE MODE: Strict deadline (No leeway)
             // If total_days = 7, and started on 11th, deadline is 11 + 7 = 18th. 
             // On the 18th, it's considered finished/expired if not completed.
@@ -154,6 +148,7 @@ class ChallengeController extends Controller
                 $c->load('series');
             }
 
+            $c->setAttribute('today_entry', $entry ? $entry->load('content') : null);
             $c->setAttribute('debt_days', $this->getDebtDays($c));
             
             // Calculate how many entries were actually filled

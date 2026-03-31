@@ -26,7 +26,7 @@ class ContentController extends Controller
             });
         }
 
-        $contents = $query->latest()->paginate(15)->appends($request->all());
+        $contents = $query->orderBy('number', 'asc')->paginate(15)->appends($request->all());
         $series = Series::all();
         
         if ($request->ajax()) {
@@ -48,6 +48,7 @@ class ContentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+            'number' => 'required|integer',
             'series_id' => 'required|exists:series,id',
             'surah_ayah' => 'required|string',
             'arabic_text' => 'required|string',
@@ -71,6 +72,7 @@ class ContentController extends Controller
     public function update(Request $request, Content $content)
     {
         $data = $request->validate([
+            'number' => 'required|integer',
             'series_id' => 'required|exists:series,id',
             'surah_ayah' => 'required|string',
             'arabic_text' => 'required|string',

@@ -9,8 +9,12 @@
             @csrf
             @method('PUT')
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor</label>
+                    <input type="number" name="number" value="{{ old('number', $content->number) }}" required class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                </div>
+                <div class="md:col-span-5">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Series TLQ</label>
                     <select name="series_id" class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none transition">
                         @foreach($series as $s)
@@ -18,7 +22,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="md:col-span-5">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Surah & Ayat</label>
                     <input type="text" name="surah_ayah" value="{{ old('surah_ayah', $content->surah_ayah) }}" required class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none transition">
                 </div>

@@ -90,7 +90,7 @@ class QrScannerOverlayShape extends ShapeBorder {
   final double borderLength;
   final double cutOutSize;
 
-  QrScannerOverlayShape({
+  const QrScannerOverlayShape({
     this.borderColor = Colors.red,
     this.borderWidth = 3.0,
     this.overlayColor = 150, // 0-255 opacity

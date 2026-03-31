@@ -829,70 +829,86 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   }) {
     return FadeInLeft(
       child: Container(
-        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDone ? color.withAlpha(80) : (isLocked ? Colors.grey.shade200 : Colors.transparent),
-          ),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12)],
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 15, offset: const Offset(0, 5))],
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isLocked ? null : onTap,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDone ? color.withAlpha(20) : (isLocked ? Colors.grey.shade100 : color.withAlpha(15)),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDone ? color.withAlpha(80) : (isLocked ? Colors.grey.shade200 : Colors.transparent),
+                  width: 1.5,
+                ),
               ),
-              child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(title,
-                            style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: isLocked ? Colors.grey : const Color(0xFF1A2E1A))),
-                      ),
-                      if (isDone) Icon(Icons.check_circle_rounded, color: color, size: 20),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(subtitle,
-                      style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: isDone ? color : (isLocked ? Colors.grey.shade400 : Colors.grey[600]),
-                          fontStyle: isDone ? FontStyle.italic : FontStyle.normal)),
-                  if (!isDone && !isLocked && onTap != null) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: onTap,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: color,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text('Isi Sekarang', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                      ),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDone ? color.withAlpha(20) : (isLocked ? Colors.grey.shade100 : color.withAlpha(15)),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ],
+                    child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(title,
+                                  style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: isLocked ? Colors.grey : const Color(0xFF1A2E1A))),
+                            ),
+                            if (isDone) 
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                                child: const Icon(Icons.check, color: Colors.white, size: 12),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(subtitle,
+                            style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: isDone ? color : (isLocked ? Colors.grey.shade400 : Colors.grey[600]),
+                                fontWeight: isDone ? FontWeight.w600 : FontWeight.normal,
+                                fontStyle: isDone ? FontStyle.italic : FontStyle.normal)),
+                        
+                        if (!isDone && !isLocked) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Text('Isi Sekarang', 
+                                style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w900, fontSize: 12)),
+                              const SizedBox(width: 4),
+                              Icon(Icons.arrow_forward, color: color, size: 14),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

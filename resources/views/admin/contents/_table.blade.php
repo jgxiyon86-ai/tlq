@@ -1,5 +1,8 @@
 @foreach($contents as $content)
 <tr class="text-sm text-gray-600 hover:bg-gray-50 transition">
+    <td class="py-4 text-gray-400 text-xs">
+        {{ $content->number }}
+    </td>
     <td class="py-4">
         <span class="px-3 py-1 rounded-full text-white text-xs" style="background-color: {{ $content->series->color_hex }}">
             {{ $content->series->name }}
@@ -20,6 +23,6 @@
 
 @if($contents->isEmpty())
 <tr>
-    <td colspan="4" class="py-10 text-center text-gray-400">Tidak ada konten yang ditemukan.</td>
+    <td colspan="5" class="py-10 text-center text-gray-400">Tidak ada konten yang ditemukan.</td>
 </tr>
 @endif
